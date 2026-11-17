@@ -55,6 +55,7 @@ export const roles: Role[] = [
       'enterprise-access-control-and-role-management-platform',
       'multi-channel-banking-notification-system',
       'banking-microsite-and-content-management-platform',
+      'learning-management-and-job-matching-platform',
     ],
   },
   {
@@ -198,7 +199,7 @@ export const board: { column: string; hint: string; cards: BoardCard[] }[] = [
         label: 'F1Soft, level 3 of my journey',
       },
       {
-        from: 'Hivelaya',
+        from: 'AMNIL',
         title: 'One profile, not four tools',
         body: 'Learners were piecing together courses, certificates, resumes and job boards. We joined them into one skills profile.',
         metric: 'thousands of learners in Nepal',
@@ -341,7 +342,10 @@ export const levels: Level[] = [
     when: 'Mar 2024 to May 2025',
     title: 'AMNIL Technologies',
     art: 'dial',
-    story: ['Technical project manager for enterprise banking products, with backend, frontend, QA, design and DevOps on the team.'],
+    story: [
+      'Technical project manager for enterprise banking products, with backend, frontend, QA, design and DevOps on the team.',
+      'Also ran Hivelaya, a learning and job-matching platform in one: courses, skill checks, a resume builder and job matches. It served thousands of learners across Nepal.',
+    ],
     boss: 'Opening a bank account took 3 days. Compliance automation brought it under an hour.',
     unlocked: ['Core banking integrations', 'CDD and ECDD compliance', 'Mentoring PMs'],
     projects: [
@@ -350,19 +354,11 @@ export const levels: Level[] = [
       'enterprise-access-control-and-role-management-platform',
       'multi-channel-banking-notification-system',
       'banking-microsite-and-content-management-platform',
+      'learning-management-and-job-matching-platform',
     ],
   },
   {
     n: 5,
-    place: 'Side quest',
-    when: 'Along the way',
-    title: 'Hivelaya',
-    art: 'cap',
-    story: ['A learning and job-matching platform in one: courses, skill checks, a resume builder and job matches. It served thousands of learners across Nepal.'],
-    projects: ['learning-management-and-job-matching-platform'],
-  },
-  {
-    n: 6,
     place: 'Kathmandu to Ohio',
     when: '2025',
     title: 'The flight',
@@ -372,7 +368,7 @@ export const levels: Level[] = [
     ],
   },
   {
-    n: 7,
+    n: 6,
     place: 'Fairborn, Ohio',
     when: 'Now',
     title: 'Wright State University',

@@ -14,6 +14,7 @@ stack:
   - ".NET"
   - "REST APIs"
   - "PostgreSQL"
+company: "AMNIL Technologies"
 art: "cap"
 group: "platforms"
 ---

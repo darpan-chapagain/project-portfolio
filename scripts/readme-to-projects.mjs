@@ -55,7 +55,7 @@ const meta = {
       { name: 'License Keys & Codes', url: 'https://apps.shopify.com/dpl-selling-codes-keys', art: 'key', blurb: 'Sells game codes and license keys on Shopify, and delivers each one to the buyer right after payment.' },
     ],
   },
-  'learning-management-and-job-matching-platform': { art: 'cap', group: 'platforms' },
+  'learning-management-and-job-matching-platform': { company: 'AMNIL Technologies', art: 'cap', group: 'platforms' },
   'fittracker': { company: 'Personal project', art: 'dumbbell', group: 'ai', featured: true },
   'himal-ash': { company: 'Personal project', art: 'sword', group: 'games', repo: 'https://github.com/darpan-chapagain/himal-ash' },
   'real-time-pose-analysis-and-exercise-quality-tracking-system': { art: 'pose', group: 'ai' },

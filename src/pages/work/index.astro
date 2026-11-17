@@ -41,17 +41,7 @@ const claimed = new Set(roles.flatMap((r) => r.projects));
 const sections = [
   {
     title: 'Industry',
-    blocks: [
-      ...fromRoles,
-      {
-        company: 'Hivelaya',
-        titles: byId('learning-management-and-job-matching-platform').data.role,
-        when: ['Side project'],
-        place: 'Nepal',
-        art: 'cap',
-        ids: ['learning-management-and-job-matching-platform'],
-      },
-    ],
+    blocks: fromRoles,
   },
   {
     title: 'Independent',
