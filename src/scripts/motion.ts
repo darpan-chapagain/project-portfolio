@@ -32,9 +32,23 @@ const labelToggle = () => {
 };
 labelToggle();
 
+// Saved choice: localStorage where allowed, plus the tab's name as a fallback that
+// survives page-to-page navigation even when storage is blocked.
+function savedTheme(): string | null {
+  let t: string | null = null;
+  try { t = localStorage.getItem('theme'); } catch { /* storage may be blocked */ }
+  if (t === 'light' || t === 'dark') return t;
+  const m = /(?:^|;)theme=(light|dark)/.exec(window.name || '');
+  return m ? m[1] : null;
+}
+
 function setTheme(next: 'light' | 'dark', save: boolean) {
   root.dataset.theme = next;
-  if (save) { try { localStorage.setItem('theme', next); } catch { /* storage may be blocked */ } }
+  if (save) {
+    try { localStorage.setItem('theme', next); } catch { /* storage may be blocked */ }
+    const rest = (window.name || '').split(';').filter((p) => p && !p.startsWith('theme='));
+    window.name = [...rest, `theme=${next}`].join(';');
+  }
   readColours();
   labelToggle();
 }
@@ -56,11 +70,15 @@ toggle?.addEventListener('click', () => {
   });
 });
 
+// Pages restored by the back button keep their old state; bring them up to date.
+window.addEventListener('pageshow', (e) => {
+  const t = savedTheme();
+  if (e.persisted && (t === 'light' || t === 'dark') && t !== root.dataset.theme) setTheme(t, false);
+});
+
 // Follow the device setting until the visitor picks one. Light unless the device is dark.
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  let saved: string | null = null;
-  try { saved = localStorage.getItem('theme'); } catch { /* ignore */ }
-  if (!saved) setTheme(e.matches ? 'dark' : 'light', false);
+  if (!savedTheme()) setTheme(e.matches ? 'dark' : 'light', false);
 });
 
 /* ---------- Sticky navbar ---------- */

@@ -36,9 +36,11 @@ const nav = [
     <script is:inline>
       // Pick the theme before anything paints: a saved choice first, otherwise light,
       // unless the visitor's device is set to dark.
+      // If saved settings are blocked (private modes, embedded previews), the tab's name carries it.
       (function () {
         var d = document.documentElement, t;
         try { t = localStorage.getItem('theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') { var m = /(?:^|;)theme=(light|dark)/.exec(window.name || ''); if (m) t = m[1]; }
         if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         d.dataset.theme = t;
         d.classList.add('js');
