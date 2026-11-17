@@ -43,6 +43,8 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
         </p>
       </div>
 
+      <div class="bars" aria-hidden="true"><span></span><span></span></div>
+      <p class="subtitle" data-subtitle hidden></p>
       <div class="bubbles" data-bubbles></div>
       <p class="caption" data-caption hidden></p>
       <p class="toast hand" data-toast role="status" hidden></p>
@@ -150,6 +152,41 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
   .hud-right [data-hud-extra] { padding: 0 0.3em; background: var(--postit); color: var(--postit-ink); }
   .fs { pointer-events: auto; display: grid; place-items: center; width: 1.8rem; height: 1.8rem; padding: 0; border: 1.5px solid rgb(var(--chalk-rgb) / 0.4); border-radius: 6px; background: var(--ink); color: var(--paper); cursor: pointer; }
   .fs svg { width: 0.9rem; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+  /* Cutscenes: letterbox bars slide in, the HUD steps aside, lines appear as subtitles. */
+  .bars span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 11%;
+    background: #0e0d0b;
+    transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .bars span:first-child { top: 0; transform: translateY(-101%); }
+  .bars span:last-child { bottom: 0; transform: translateY(101%); }
+  :global(.cinema) .bars span { transform: translateY(0); }
+  .hud, .jump { transition: opacity 400ms ease; }
+  :global(.cinema) .hud, :global(.cinema) .jump { opacity: 0; pointer-events: none; }
+  .subtitle {
+    position: absolute;
+    left: 50%;
+    bottom: 1.6%;
+    translate: -50% 0;
+    z-index: 3;
+    margin: 0;
+    width: max-content;
+    max-width: 86%;
+    color: #f1ead9;
+    font-size: clamp(0.75rem, 2.2cqi, 1.15rem);
+    line-height: 1.3;
+    text-align: center;
+    letter-spacing: 0.01em;
+    animation: sub-in 500ms ease backwards;
+  }
+  .subtitle:global(.thought) { font-family: var(--hand); font-size: clamp(0.85rem, 2.6cqi, 1.3rem); }
+  @keyframes sub-in { from { opacity: 0; } to { opacity: 1; } }
 
   /* Speech bubbles sit over the canvas and follow whoever is talking. */
   .bubbles { position: absolute; inset: 0; pointer-events: none; }
@@ -300,6 +337,7 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
     .sheet, .card { max-height: calc(100svh - 1.6rem); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .bubbles :global(.bubble), .sheet, .card, .caption, .toast:global(.pop) { animation: none; }
+    .bubbles :global(.bubble), .sheet, .card, .caption, .toast:global(.pop), .subtitle { animation: none; }
+    .bars span { transition: none; }
   }
 </style>

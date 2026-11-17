@@ -181,6 +181,18 @@ export class Pen {
 
 export const textWidth = (s: string) => Math.max(0, s.length * 4 - 1);
 
+/** Big pixel text for title cards: every font pixel becomes an s-by-s block. */
+export function bigText(p: Pen, str: string, x: number, y: number, s: number, align: 'left' | 'center' = 'left', count = Infinity) {
+  const t = str.toUpperCase();
+  const w = (t.length * 4 - 1) * s;
+  let cx = Math.round(align === 'center' ? x - w / 2 : x);
+  [...t].slice(0, count).forEach((ch) => {
+    const g = FONT[ch] ?? FONT['?'];
+    for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (g[j][i] === 'k') p.x.fillRect(cx + i * s, Math.round(y) + j * s, s, s);
+    cx += 4 * s;
+  });
+}
+
 const FONT: Record<string, string[]> = {
   A: ['.k.', 'k.k', 'kkk', 'k.k', 'k.k'], B: ['kk.', 'k.k', 'kk.', 'k.k', 'kk.'], C: ['.kk', 'k..', 'k..', 'k..', '.kk'],
   D: ['kk.', 'k.k', 'k.k', 'k.k', 'kk.'], E: ['kkk', 'k..', 'kk.', 'k..', 'kkk'], F: ['kkk', 'k..', 'kk.', 'k..', 'k..'],
@@ -384,6 +396,12 @@ export function makePerson(key: string, pal: Pal, extra: Partial<Look> = {}): Fr
 }
 
 export const suitcase = (pal: Pal) => sprite(SUITCASE, pal);
+
+/** One hand-drawn pose by name, for poses only some people have (the player's back view). */
+export function heroSprite(key: string, pose: string, pal: Pal): Sprite | null {
+  const rows = HERO_FRAMES[`${key}:${pose}`];
+  return rows ? sprite(rows, pal) : null;
+}
 
 // ---------------------------------------------------------------- objects
 

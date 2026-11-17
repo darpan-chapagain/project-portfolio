@@ -1,7 +1,8 @@
 // The game loop for /play. Reads the level data the page hands it, builds one long street,
 // and plays it with keyboard, mouse or touch.
-import { W, H, G, Pen, readPal, type Pal, makePerson, type FrameSet, sprite, type Sprite, STAR, DIPLOMA, suitcase } from './art';
+import { W, H, G, Pen, readPal, type Pal, makePerson, type FrameSet, sprite, type Sprite, STAR, DIPLOMA, suitcase, heroSprite } from './art';
 import * as S from './scenery';
+import * as Shots from './shots';
 import type { Beat, Line, LevelScript } from '../data/game';
 
 export type LevelData = {
@@ -35,9 +36,19 @@ const BOSS_TOP: Record<string, number> = { clock: 28, outage: 30, records: 25, q
 
 export function startGame(root: HTMLElement, data: GameData) {
   const canvas = root.querySelector<HTMLCanvasElement>('canvas')!;
-  const ctx = canvas.getContext('2d')!;
+  const screen = canvas.getContext('2d')!;
+  screen.imageSmoothingEnabled = false;
+  // Everything is drawn into a 320x180 buffer, then copied to the screen, zoomed in when a
+  // cutscene wants a close-up.
+  const buf = document.createElement('canvas');
+  buf.width = W;
+  buf.height = H;
+  const ctx = buf.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   const pen = new Pen(ctx);
+  const view = { z: 1, sx: 0, sy: 0 };
+  let zoom = 1, zoomTo = 1;
+  let focus = { x: 0, y: H / 2 }, focusTo = { x: 0, y: H / 2 };
   const ui = {
     level: root.querySelector<HTMLElement>('[data-hud-level]')!,
     skills: root.querySelector<HTMLElement>('[data-hud-skills]')!,
@@ -45,6 +56,7 @@ export function startGame(root: HTMLElement, data: GameData) {
     bubbles: root.querySelector<HTMLElement>('[data-bubbles]')!,
     caption: root.querySelector<HTMLElement>('[data-caption]')!,
     toast: root.querySelector<HTMLElement>('[data-toast]')!,
+    subtitle: root.querySelector<HTMLElement>('[data-subtitle]')!,
     start: root.querySelector<HTMLElement>('[data-start]')!,
     cards: root.querySelector<HTMLElement>('[data-cards]')!,
     jump: root.querySelector<HTMLButtonElement>('[data-jump]'),
@@ -52,13 +64,21 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   let pal: Pal = readPal();
   let cache = new Map<string, FrameSet>();
-  let stars: Sprite, diploma: Sprite, bag: Sprite;
+  let stars: Sprite, diploma: Sprite, bag: Sprite, planeSprite: Sprite;
+  let backUp: Sprite | null = null;
   const paint = () => {
     pal = readPal();
     cache = new Map();
     stars = sprite(STAR, pal);
     diploma = sprite(DIPLOMA, pal);
     bag = suitcase(pal);
+    backUp = null;
+    // the plane, drawn once at 1x so the flight shots can show it bigger
+    planeSprite = document.createElement('canvas');
+    planeSprite.width = 66;
+    planeSprite.height = 30;
+    const pctx = planeSprite.getContext('2d')!;
+    S.plane(new Pen(pctx), pal, 2, 24, false, 0);
   };
   paint();
   new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -177,6 +197,10 @@ export function startGame(root: HTMLElement, data: GameData) {
     ui.bubbles.innerHTML = '';
     passive.length = 0; current = null;
     ui.caption.hidden = true;
+    shot = null;
+    zoom = zoomTo = 1;
+    fadeColor = '';
+    cinema(false);
     updateHud();
   }
 
@@ -192,6 +216,32 @@ export function startGame(root: HTMLElement, data: GameData) {
   }
   const lock = () => { locks++; target = null; };
   const unlock = () => { locks = Math.max(0, locks - 1); };
+
+  // ------------------------------------------------------------ cinema
+  let shot: null | { kind: 'terrace' | 'himalaya' | 'ocean' | 'usa'; k: number; dawn: number; star: number } = null;
+  let fadeColor = '';
+  function cinema(on: boolean) {
+    root.classList.toggle('cinema', on);
+    if (!on) { zoomTo = 1; subtitle(''); }
+  }
+  function subtitle(text: string, thought = false) {
+    ui.subtitle.textContent = text;
+    ui.subtitle.classList.toggle('thought', thought);
+    ui.subtitle.hidden = !text;
+  }
+  /** Ease the camera onto a world point at a zoom level. */
+  function aim(x: number, y: number, z: number) {
+    focusTo = { x, y };
+    zoomTo = z;
+  }
+  async function cut(sec = 0.5) {
+    fadeColor = '#0e0d0b';
+    await fadeTo(1, sec);
+  }
+  async function uncut(sec = 0.5) {
+    await fadeTo(0, sec);
+    fadeColor = '';
+  }
 
   // ------------------------------------------------------------ words on screen
   type Anchor = () => { x: number; y: number };
@@ -223,9 +273,10 @@ export function startGame(root: HTMLElement, data: GameData) {
   }
   function place(el: HTMLElement, anchor: Anchor) {
     const a = anchor();
-    const x = Math.min(W - 30, Math.max(30, a.x - cam));
+    const bx = (a.x - cam - view.sx) * view.z, by = (a.y - view.sy) * view.z;
+    const x = Math.min(W - 30, Math.max(30, bx));
     el.style.left = `${(x / W) * 100}%`;
-    el.style.top = `${(Math.max(30, a.y) / H) * 100}%`;
+    el.style.top = `${(Math.max(30, by) / H) * 100}%`;
   }
   const lineTime = (l: Line) => Math.min(4, Math.max(1.9, 1.2 + l.text.length * 0.05));
 
@@ -241,10 +292,10 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   async function say(line: Line, sec: number) {
     if (line.narrate) {
-      ui.caption.textContent = line.text;
-      ui.caption.hidden = false;
+      const film = root.classList.contains('cinema');
+      if (film) subtitle(line.text); else { ui.caption.textContent = line.text; ui.caption.hidden = false; }
       await wait(lineTime(line) + 0.4);
-      ui.caption.hidden = true;
+      if (film) subtitle(''); else ui.caption.hidden = true;
       return;
     }
     const anchor = anchorFor(line, sec);
@@ -378,8 +429,9 @@ export function startGame(root: HTMLElement, data: GameData) {
     if (to === 0) forcedNight = null;
   }
 
-  // In the front door, up the stairs (the lights follow you), out onto the terrace for the night,
-  // then down again in the morning with a suitcase. The family comes out after you.
+  // In the front door, up the stairs (the lights follow you), out onto the terrace. Then the
+  // camera goes behind you while you look at the sky. In the morning you come down with a
+  // suitcase, and only then does the family come out.
   async function goHome(tr: Trigger) {
     const sec = sections[tr.section];
     const home = things.find((th) => th.type === 'familyhome' && th.x >= sec.x0 && th.x < sec.x1);
@@ -387,14 +439,17 @@ export function startGame(root: HTMLElement, data: GameData) {
     const st = home.st;
     const doorX = home.x + 68;
     lock();
+    cinema(true);
     player.vx = 0;
     camOverride = home.x - 90;
+    aim(doorX - 6, G - 20, 1.5);
     await walkPlayer(doorX);
     st.door = 1;
     await wait(0.35, false);
     player.hidden = true;
     await wait(0.3, false);
     st.door = 0;
+    aim(home.x + 42, G - 40, 1.25);
     void tweenNight(0, 1, 2.8);
     await wait(0.4, false);
     st.lit = [1];
@@ -404,21 +459,52 @@ export function startGame(root: HTMLElement, data: GameData) {
     st.hutDoor = 1;
     await wait(0.3, false);
     player.onRoof = { x: home.x + 16, y: G - 56 };
+    aim(home.x + 34, G - 70, 1.9);
     await wait(0.3, false);
     st.hutDoor = 0;
     await walkPlayer(home.x + 47, true);
     player.facing = 1;
     st.lit = [0, 1, 2, 3, 4];
-    for (const l of tr.beat.lines ?? []) await say(l, tr.section);
-    await wait(0.9, false);
-    void tweenNight(1, 0, 2.4);
-    await wait(1.3, false);
+    await wait(0.5, false);
+    // the camera goes behind you
+    await cut(0.7);
+    shot = { kind: 'terrace', k: 0, dawn: 0, star: 0 };
+    zoomTo = zoom = 1;
+    await uncut(0.9);
+    await wait(1.2, false);
+    const lines = tr.beat.lines ?? [];
+    for (let i = 0; i < lines.length; i++) {
+      subtitle(lines[i].text, true);
+      await wait(lineTime(lines[i]) + 0.5);
+      subtitle('');
+      await wait(0.35, false);
+      if (i === lines.length - 1) {
+        // a shooting star, just after the last thought
+        let k = 0;
+        while (k < 1) { k += (await nextFrame()) / 1.1; if (shot) shot.star = k; }
+      }
+    }
+    await wait(0.6, false);
+    // morning comes up behind the mountains
+    let d = 0;
+    while (d < 1) { d = Math.min(1, d + (await nextFrame()) / 3); if (shot) shot.dawn = d; }
+    await wait(0.6, false);
+    await cut(0.7);
+    shot = null;
+    forcedNight = null;
+    st.lit = undefined;
+    player.onRoof = { x: home.x + 47, y: G - 56 };
+    aim(home.x + 34, G - 70, 1.9);
+    focus = { ...focusTo };
+    zoom = zoomTo;
+    await uncut(0.7);
     await walkPlayer(home.x + 16, true);
     st.hutDoor = 1;
     await wait(0.3, false);
     player.onRoof = null;
     await wait(0.3, false);
     st.hutDoor = 0;
+    aim(doorX + 20, G - 20, 1.4);
     st.lit = [3];
     await wait(0.5, false);
     st.lit = [1];
@@ -430,12 +516,13 @@ export function startGame(root: HTMLElement, data: GameData) {
     player.hidden = false;
     player.carry = true;
     camOverride = home.x - 40;
-    // stand a little way past where the family will gather
     const spots = (npcs[tr.section] ?? []).filter((n) => n.inside).map((n) => n.homeX);
-    await walkPlayer((spots.length ? Math.max(...spots) : doorX) + 16);
+    const stand = (spots.length ? Math.max(...spots) : doorX) + 16;
+    await walkPlayer(stand);
     player.facing = -1;
     await wait(0.5, false);
     // one by one, they come out
+    aim((doorX + stand) / 2, G - 18, 1.5);
     const out = (npcs[tr.section] ?? []).filter((n) => n.inside);
     for (const n of out) {
       n.x = doorX;
@@ -465,12 +552,13 @@ export function startGame(root: HTMLElement, data: GameData) {
           const from = n.x;
           await walkNpc(n, player.x - 11, 30);
           n.facing = 1;
+          aim(player.x - 6, G - 16, 2.2);
           player.tika = true;
           burst(player.x - 3, player.y - 17, 'red', 5);
-          ui.caption.textContent = l.text;
-          ui.caption.hidden = false;
+          subtitle(l.text);
           await wait(lineTime(l) + 0.4);
-          ui.caption.hidden = true;
+          subtitle('');
+          aim(player.x - 30, G - 18, 1.5);
           await walkNpc(n, from, 30);
           n.facing = 1;
           continue;
@@ -485,11 +573,13 @@ export function startGame(root: HTMLElement, data: GameData) {
       const from = n.x;
       await walkNpc(n, player.x - (n.look === 'bhai' ? 9 : 10), n.look === 'bhai' ? 70 : 40);
       n.facing = 1;
+      aim(player.x - 5, G - 14, 2.3);
       hugging.add(who);
       hugging.add('me');
       await wait(2.4);
       hugging.delete(who);
       hugging.delete('me');
+      aim(player.x - 30, G - 18, 1.5);
       await walkNpc(n, from, 40);
       n.facing = 1;
     }
@@ -497,6 +587,7 @@ export function startGame(root: HTMLElement, data: GameData) {
     await wait(0.7, false);
     player.facing = 1;
     camOverride = null;
+    cinema(false);
     unlock();
   }
 
@@ -513,6 +604,7 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   async function lookBack() {
     lock();
+    cinema(true);
     player.vx = 0;
     await wait(0.3, false);
     // frame the whole family waving, with you at the right edge
@@ -526,6 +618,7 @@ export function startGame(root: HTMLElement, data: GameData) {
     await wait(0.4, false);
     crying.delete('me');
     camOverride = null;
+    cinema(false);
     unlock();
   }
 
@@ -538,54 +631,77 @@ export function startGame(root: HTMLElement, data: GameData) {
     }
   }
 
+  async function playShot(kind: 'himalaya' | 'ocean' | 'usa', sec: number, line: string) {
+    await cut(0.6);
+    shot = { kind, k: 0, dawn: 0, star: 0 };
+    subtitle(line);
+    await uncut(0.6);
+    let k = 0;
+    while (k < 1) {
+      k = Math.min(1, k + (await nextFrame()) / sec);
+      if (shot) shot.k = k;
+    }
+  }
+
   async function fly() {
     if (!flight || !landing) return;
     const f = flight, l = landing;
     lock();
+    cinema(true);
     player.vx = 0;
     player.hidden = true;
     plane.active = true;
     plane.gear = true;
     burst(f.planeX + 50, G - 8, 'mid', 6);
-    // taxi and take off
+    // taxi and take off, close in
     let v = 0;
-    while (plane.x < f.planeX + 260) {
+    zoom = zoomTo = 1.6;
+    focus = focusTo = { x: plane.x + 30 - cam, y: G - 14 };
+    subtitle(f.caption);
+    while (plane.x < f.planeX + 300) {
       const dt = await nextFrame();
-      v = Math.min(150, v + 70 * dt);
+      v = Math.min(160, v + 70 * dt);
       plane.x += v * dt;
-      if (plane.x > f.planeX + 120) plane.y = Math.max(G - 58, plane.y - 34 * dt);
+      if (plane.x > f.planeX + 120) plane.y = Math.max(G - 70, plane.y - 40 * dt);
       if (plane.y < G - 10) plane.gear = false;
       camOverride = plane.x - 120;
+      aim(plane.x + 30, plane.y - 8, plane.y < G - 30 ? 1.2 : 1.6);
     }
-    ui.caption.textContent = f.caption;
-    ui.caption.hidden = false;
-    // cruise to the far side
+    // the long way round
+    await playShot('himalaya', 6, 'Over the Himalayas.');
+    await playShot('ocean', 6, 'Across the ocean.');
+    await playShot('usa', 7.5, '');
+    // down into Ohio
+    await cut(0.6);
+    shot = null;
+    subtitle('');
     const touchdown = l.x0 + 70;
-    while (plane.x < touchdown - 230) {
-      const dt = await nextFrame();
-      plane.x += 150 * dt;
-      plane.y = Math.max(G - 60, plane.y - 30 * dt);
-      camOverride = plane.x - 120;
-    }
-    ui.caption.hidden = true;
-    // descend and land
+    plane.x = touchdown - 260;
+    plane.y = G - 60;
+    camOverride = plane.x - 120;
+    cam = camOverride;
+    zoom = zoomTo = 1.3;
+    focus = focusTo = { x: plane.x + 30 - cam, y: plane.y - 8 };
+    await uncut(0.6);
     const startX = plane.x, startY = plane.y;
     while (plane.x < touchdown) {
       const dt = await nextFrame();
-      plane.x += 130 * dt;
+      plane.x += 120 * dt;
       const k = Math.min(1, (plane.x - startX) / (touchdown - startX));
       plane.y = startY + (G - startY) * k;
       plane.gear = k > 0.5;
       camOverride = plane.x - 120;
+      aim(plane.x + 30, plane.y - 8, 1.3 + k * 0.3);
     }
     plane.y = G;
     burst(plane.x + 20, G - 1, 'mid', 8);
-    v = 130;
+    v = 120;
     while (v > 0) {
       const dt = await nextFrame();
-      v = Math.max(0, v - 110 * dt);
+      v = Math.max(0, v - 100 * dt);
       plane.x += v * dt;
       camOverride = plane.x - 120;
+      aim(plane.x + 30, G - 10, 1.6);
     }
     flown = true;
     player.tika = false;
@@ -594,7 +710,10 @@ export function startGame(root: HTMLElement, data: GameData) {
     player.y = G;
     player.facing = 1;
     burst(player.x, G - 10, 'yellow', 10);
+    aim(player.x, G - 14, 1.6);
+    await wait(1.2, false);
     camOverride = null;
+    cinema(false);
     unlock();
   }
 
@@ -637,7 +756,7 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   const toWorld = (e: PointerEvent) => {
     const r = canvas.getBoundingClientRect();
-    return { x: ((e.clientX - r.left) / r.width) * W + cam, y: ((e.clientY - r.top) / r.height) * H };
+    return { x: view.sx + (((e.clientX - r.left) / r.width) * W) / view.z + cam, y: view.sy + (((e.clientY - r.top) / r.height) * H) / view.z };
   };
   canvas.addEventListener('pointerdown', (e) => {
     if (state !== 'play') return;
@@ -740,7 +859,12 @@ export function startGame(root: HTMLElement, data: GameData) {
 
     // section change
     const si = sectionAt(player.x);
-    if (si !== currentSection && si >= 0) { currentSection = si; updateHud(); }
+    if (si !== currentSection && si >= 0) {
+      currentSection = si;
+      // the blazer is for the office; home and grad school are casual
+      if (!sections[si]?.s?.beats?.some((b) => b.action === 'levelUp')) player.senior = false;
+      updateHud();
+    }
 
     // triggers
     if (state === 'play' && locks === 0) {
@@ -866,6 +990,12 @@ export function startGame(root: HTMLElement, data: GameData) {
     }
     night = forcedNight ?? n;
 
+    // zoom eases toward its target
+    zoom += (zoomTo - zoom) * Math.min(1, dt * 2.2);
+    focus.x += (focusTo.x - cam - focus.x) * Math.min(1, dt * 3);
+    focus.y += (focusTo.y - focus.y) * Math.min(1, dt * 3);
+    if (Math.abs(zoomTo - 1) < 0.001 && Math.abs(zoom - 1) < 0.01) zoom = 1;
+
     // camera
     const want = camOverride ?? player.x - 110;
     cam += (want - cam) * Math.min(1, dt * (camOverride !== null ? 3 : 6));
@@ -905,6 +1035,11 @@ export function startGame(root: HTMLElement, data: GameData) {
   function draw() {
     const c = Math.round(cam);
     ctx.globalAlpha = 1;
+    if (shot) {
+      drawShot();
+      finish();
+      return;
+    }
     pen.c(pal.bg).rect(0, 0, W, H);
     // sketchbook grid, moving with the world
     pen.c(pal.soft);
@@ -1053,11 +1188,34 @@ export function startGame(root: HTMLElement, data: GameData) {
       pen.line(sx - 2, G + 3, sx + 2, G + 7); pen.line(sx + 2, G + 3, sx - 2, G + 7);
     }
 
+    finish();
+  }
+
+  function drawShot() {
+    if (!shot) return;
+    if (shot.kind === 'terrace') {
+      backUp = backUp ?? heroSprite('me', 'backUp', pal);
+      if (backUp) Shots.terrace(pen, pal, t, shot.dawn, backUp, shot.star);
+    } else if (shot.kind === 'himalaya') Shots.himalaya(pen, pal, t, shot.k, planeSprite);
+    else if (shot.kind === 'ocean') Shots.ocean(pen, pal, t, shot.k, planeSprite);
+    else Shots.usa(pen, pal, t, shot.k, planeSprite);
+  }
+
+  /** Fade, then copy the buffer to the screen, zoomed in on the focus if there is one. */
+  function finish() {
     if (fade > 0) {
       ctx.globalAlpha = fade;
-      pen.c(pal.bg).rect(0, 0, W, H);
+      pen.c(fadeColor || pal.bg).rect(0, 0, W, H);
       ctx.globalAlpha = 1;
     }
+    const z = shot ? 1 : zoom;
+    const sw = W / z, sh = H / z;
+    view.z = z;
+    view.sx = Math.max(0, Math.min(W - sw, focus.x - sw / 2));
+    view.sy = Math.max(0, Math.min(H - sh, focus.y - sh / 2));
+    screen.imageSmoothingEnabled = false;
+    screen.clearRect(0, 0, W, H);
+    screen.drawImage(buf, view.sx, view.sy, sw, sh, 0, 0, W, H);
   }
   const hashOff = (i: number) => S.hash(i * 1.7 + 4.2);
 
@@ -1103,9 +1261,10 @@ export function startGame(root: HTMLElement, data: GameData) {
   // A small hook for automated playtests: /play/?debug
   if (location.search.includes('debug')) {
     (window as unknown as Record<string, unknown>).__game = {
-      get state() { return { state, x: Math.round(player.x), y: Math.round(player.y), locks, cam: Math.round(cam), skillsGot, totalSkills, delivered, flown, section: currentSection, worldEnd, bosses: bosses.map((b) => ({ x: Math.round(b.x), hp: b.hp, alive: b.alive, gate: b.gateX })) }; },
+      get state() { return { shot: shot?.kind ?? null, zoom: Math.round(zoom * 100) / 100, state, x: Math.round(player.x), y: Math.round(player.y), locks, cam: Math.round(cam), skillsGot, totalSkills, delivered, flown, section: currentSection, worldEnd, bosses: bosses.map((b) => ({ x: Math.round(b.x), hp: b.hp, alive: b.alive, gate: b.gateX })) }; },
       teleport(x: number) {
         triggers.forEach((tr) => { if (tr.x < x) tr.fired = true; });
+        if (landing && x >= landing.x0) { flown = true; if (flight) { plane.x = landing.x0 + 200; plane.y = G; } }
         passive.length = 0;
         player.x = x; player.y = G; cam = x - 110;
       },
