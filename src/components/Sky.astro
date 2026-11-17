@@ -1,0 +1,70 @@
+---
+// A quiet background layer for a section: a few doodles and stars,
+// joined by lines that meet at the cursor. Drop it in as the first child
+// of a section with class="has-sky". x and y place each doodle's top-left corner, in percent.
+import Doodle from './Doodle.astro';
+
+type Art = { art: string; x: number; y: number; w: number; depth?: number; speed?: number; rot?: number };
+interface Props {
+  items: Art[];
+  stars?: { x: number; y: number }[];
+  /** Strongest line opacity, 0 to 1. */
+  strength?: number;
+  /** Keep the doodles on mid-size screens (only for sections with lots of empty space). */
+  roomy?: boolean;
+}
+const { items, stars = [], strength = 0.24, roomy = false } = Astro.props;
+---
+<div class:list={['sky', { roomy }]} data-sky={strength} aria-hidden="true">
+  <canvas class="hub"></canvas>
+  {items.map((it, i) => (
+    <div
+      class="d"
+      style={`left:${it.x}%;top:${it.y}%;width:${it.w}px;--rot:${it.rot ?? 0}deg;--i:${i}`}
+      data-depth={it.depth ?? 0.6}
+      data-speed={it.speed ?? 0.06}
+    >
+      <Doodle name={it.art} />
+    </div>
+  ))}
+  {stars.map((s, i) => (
+    <div class="d star" style={`left:${s.x}%;top:${s.y}%;--i:${i}`} data-depth={(0.3 + (i % 3) * 0.3).toFixed(2)}>
+      <Doodle name="star" />
+    </div>
+  ))}
+</div>
+
+<style>
+  .sky {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .hub { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .d {
+    position: absolute;
+    color: var(--chalk-2);
+    will-change: translate;
+  }
+  .d > :global(svg) {
+    width: 100%;
+    height: auto;
+    rotate: var(--rot);
+    animation: sky-drift 10s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -2.3s);
+  }
+  .star { width: 10px; color: var(--chalk); opacity: 0.7; }
+  .star > :global(svg) { animation: sky-twinkle 3.8s ease-in-out infinite alternate; }
+  @keyframes sky-drift { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
+  @keyframes sky-twinkle { from { opacity: 0.3; transform: scale(0.75); } to { opacity: 1; transform: scale(1.1); } }
+
+  /* On mid-size screens the text gets close to the edges: keep only the stars. */
+  @media (max-width: 1180px) {
+    .sky:not(.roomy) .d:not(.star) { display: none; }
+  }
+  @media (max-width: 760px) {
+    .sky { display: none; }
+  }
+</style>

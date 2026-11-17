@@ -59,7 +59,7 @@ function measure() {
     // Things visible on load stay put until you scroll; everything else is centred on its way through.
     it.firstScreen = it.top + it.h / 2 < window.innerHeight;
   }
-  hub?.measure();
+  hubs.forEach((h) => h.measure());
 }
 
 if (finePointer && !reduce) {
@@ -79,29 +79,32 @@ if (finePointer && !reduce) {
   }, { passive: true });
 }
 
-/* ---------- Hub lines in the hero ---------- */
-const hub = (() => {
-  const hero = document.querySelector<HTMLElement>('.hero');
-  const canvas = hero?.querySelector<HTMLCanvasElement>('canvas.hub');
+/* ---------- Lines that meet at the cursor ----------
+   Any element with data-sky gets them: a canvas.hub inside it, and its .d children as anchors.
+   data-sky holds the strongest line opacity, so quieter sections can ask for less. */
+function createHub(area: HTMLElement) {
+  const canvas = area.querySelector<HTMLCanvasElement>('canvas.hub');
   const ctx = canvas?.getContext('2d');
-  if (!hero || !canvas || !ctx) return null;
+  if (!canvas || !ctx) return null;
 
-  const anchors = items.filter((it) => hero.contains(it.el) && it.el.matches('.d'));
+  const strength = Number(area.dataset.sky || 0.42);
+  const anchors = items.filter((it) => area.contains(it.el) && it.el.matches('.d'));
   let box = { left: 0, top: 0, w: 0, h: 0 };
-  let visible = true;
+  let visible = false;
   const pos = { x: 0, y: 0, init: false };
   let pairs: [number, number][] = [];
+  const phase = Math.random() * 10000;
 
-  new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(hero);
+  new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(area);
 
   function measureHub() {
-    const r = hero!.getBoundingClientRect();
+    const r = area.getBoundingClientRect();
+    if (!r.width || !r.height) return;
     box = { left: r.left, top: r.top + window.scrollY, w: r.width, h: r.height };
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas!.width = Math.round(r.width * dpr);
     canvas!.height = Math.round(r.height * dpr);
     ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // Each anchor also links to its nearest neighbour, for a constellation.
     const c = anchors.map((a) => [a.left + a.w / 2, a.top + a.h / 2]);
     pairs = c.map((p, i) => {
       let best = -1, bd = Infinity;
@@ -115,15 +118,15 @@ const hub = (() => {
   }
 
   function draw(t: number, scrollY: number) {
-    if (!visible) return;
+    if (!visible || !box.w) return;
     const { w, h } = box;
     const offY = box.top - scrollY;
-    // Where the lines meet: the cursor when it is over the hero, otherwise a slow wander.
     const recent = performance.now() - pointer.active < 2500;
     const px = pointer.x - box.left, py = pointer.y - offY;
     const inside = recent && px >= 0 && px <= w && py >= 0 && py <= h;
-    const tx = inside ? px : w * (0.5 + Math.sin(t * 0.00023) * 0.28);
-    const ty = inside ? py : h * (0.42 + Math.cos(t * 0.00031) * 0.22);
+    const tt = t + phase;
+    const tx = inside ? px : w * (0.5 + Math.sin(tt * 0.00023) * 0.3);
+    const ty = inside ? py : h * (0.45 + Math.cos(tt * 0.00031) * 0.25);
     if (!pos.init) { pos.x = tx; pos.y = ty; pos.init = true; }
     pos.x += (tx - pos.x) * (inside ? 0.12 : 0.03);
     pos.y += (ty - pos.y) * (inside ? 0.12 : 0.03);
@@ -133,8 +136,9 @@ const hub = (() => {
     const diag = Math.hypot(w, h);
     ctx!.lineWidth = 0.7;
 
+    ctx!.strokeStyle = `rgba(214, 207, 191, ${(strength * 0.3).toFixed(3)})`;
     for (const [i, j] of pairs) {
-      ctx!.strokeStyle = 'rgba(214, 207, 191, 0.13)';
+      if (j < 0) continue;
       ctx!.beginPath();
       ctx!.moveTo(pts[i][0], pts[i][1]);
       ctx!.lineTo(pts[j][0], pts[j][1]);
@@ -142,25 +146,29 @@ const hub = (() => {
     }
     for (const [x, y] of pts) {
       const d = Math.hypot(x - pos.x, y - pos.y);
-      const a = Math.max(0.05, 0.42 - (d / diag) * 0.55);
+      const a = Math.max(strength * 0.12, strength - (d / diag) * strength * 1.3);
       ctx!.strokeStyle = `rgba(214, 207, 191, ${a.toFixed(3)})`;
       ctx!.beginPath();
       ctx!.moveTo(pos.x, pos.y);
       ctx!.lineTo(x, y);
       ctx!.stroke();
     }
-    ctx!.fillStyle = 'rgba(232, 225, 209, 0.9)';
+    ctx!.fillStyle = `rgba(232, 225, 209, ${Math.min(0.9, strength * 2.1).toFixed(2)})`;
     ctx!.beginPath();
     ctx!.arc(pos.x, pos.y, 2.2, 0, Math.PI * 2);
     ctx!.fill();
-    ctx!.strokeStyle = 'rgba(232, 225, 209, 0.28)';
+    ctx!.strokeStyle = `rgba(232, 225, 209, ${(strength * 0.65).toFixed(3)})`;
     ctx!.beginPath();
     ctx!.arc(pos.x, pos.y, 8 + Math.sin(t * 0.004) * 1.5, 0, Math.PI * 2);
     ctx!.stroke();
   }
 
   return { measure: measureHub, draw };
-})();
+}
+
+const hubs = Array.from(document.querySelectorAll<HTMLElement>('[data-sky]'))
+  .map(createHub)
+  .filter((h): h is NonNullable<ReturnType<typeof createHub>> => h !== null);
 
 /* ---------- The loop ---------- */
 function frame(t: number) {
@@ -181,14 +189,14 @@ function frame(t: number) {
     it.y = y;
     it.el.style.translate = `${x.toFixed(2)}px ${y.toFixed(2)}px`;
   }
-  hub?.draw(t, sy);
+  for (const h of hubs) h.draw(t, sy);
   requestAnimationFrame(frame);
 }
 
 function start() {
   measure();
   if (reduce) {
-    hub?.draw(0, window.scrollY);
+    hubs.forEach((h) => h.draw(0, window.scrollY));
     return;
   }
   requestAnimationFrame(frame);

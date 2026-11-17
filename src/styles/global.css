@@ -102,6 +102,10 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
 
 .section { padding-block: clamp(4.5rem, 10vw, 8rem); }
 
+/* Sections with a Sky layer: the sky sits behind the content. */
+.has-sky { position: relative; isolation: isolate; }
+.has-sky > .sky { z-index: -1; }
+
 .section-head {
   display: flex;
   align-items: baseline;
