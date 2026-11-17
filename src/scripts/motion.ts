@@ -36,10 +36,26 @@ labelToggle();
 // survives page-to-page navigation even when storage is blocked.
 function savedTheme(): string | null {
   let t: string | null = null;
+  try { t = new URLSearchParams(location.search).get('theme'); } catch { /* ignore */ }
+  if (t === 'light' || t === 'dark') return t;
   try { t = localStorage.getItem('theme'); } catch { /* storage may be blocked */ }
   if (t === 'light' || t === 'dark') return t;
   const m = /(?:^|;)theme=(light|dark)/.exec(window.name || '');
   return m ? m[1] : null;
+}
+
+// Once a visitor has picked a theme, every link on the page carries it (?theme=…),
+// so the next page opens the same way even where storage is blocked or reset.
+function carryTheme(t: string) {
+  document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
+    const raw = a.getAttribute('href') || '';
+    if (!raw || raw.startsWith('#') || /^(mailto|tel):/i.test(raw)) return;
+    let u: URL;
+    try { u = new URL(raw, location.href); } catch { return; }
+    if (u.origin !== location.origin) return;
+    u.searchParams.set('theme', t);
+    a.setAttribute('href', u.href);
+  });
 }
 
 function setTheme(next: 'light' | 'dark', save: boolean) {
@@ -48,9 +64,29 @@ function setTheme(next: 'light' | 'dark', save: boolean) {
     try { localStorage.setItem('theme', next); } catch { /* storage may be blocked */ }
     const rest = (window.name || '').split(';').filter((p) => p && !p.startsWith('theme='));
     window.name = [...rest, `theme=${next}`].join(';');
+    carryTheme(next);
   }
   readColours();
   labelToggle();
+}
+
+// Arriving with a chosen theme: keep passing it along, save it where we can,
+// and tidy the address bar.
+{
+  const chosen = savedTheme();
+  if (chosen === 'light' || chosen === 'dark') {
+    carryTheme(chosen);
+    try { localStorage.setItem('theme', chosen); } catch { /* ignore */ }
+    const rest = (window.name || '').split(';').filter((p) => p && !p.startsWith('theme='));
+    window.name = [...rest, `theme=${chosen}`].join(';');
+  }
+  try {
+    const here = new URL(location.href);
+    if (here.searchParams.has('theme')) {
+      here.searchParams.delete('theme');
+      history.replaceState(history.state, '', here.pathname + here.search + here.hash);
+    }
+  } catch { /* some embedded frames refuse; harmless */ }
 }
 
 toggle?.addEventListener('click', () => {
