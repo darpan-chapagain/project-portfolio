@@ -56,11 +56,11 @@ toggle?.addEventListener('click', () => {
   });
 });
 
-// Follow the system setting until the visitor picks one.
-window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+// Follow the device setting until the visitor picks one. Light unless the device is dark.
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
   let saved: string | null = null;
   try { saved = localStorage.getItem('theme'); } catch { /* ignore */ }
-  if (!saved) setTheme(e.matches ? 'light' : 'dark', false);
+  if (!saved) setTheme(e.matches ? 'dark' : 'light', false);
 });
 
 /* ---------- Sticky navbar ---------- */
