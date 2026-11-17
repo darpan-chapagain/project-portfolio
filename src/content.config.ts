@@ -22,6 +22,9 @@ const projects = defineCollection({
     group: z.enum(['fintech', 'platforms', 'ai', 'games']).default('fintech'),
     featured: z.boolean().default(false),
     repo: z.string().url().optional(),
+    apps: z
+      .array(z.object({ name: z.string(), url: z.string().url(), blurb: z.string(), art: z.string().default('star') }))
+      .default([]),
   }),
 });
 
