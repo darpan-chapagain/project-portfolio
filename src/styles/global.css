@@ -4,6 +4,7 @@
 @import '@fontsource/kalam/400.css';
 @import '@fontsource/kalam/700.css';
 @import '@fontsource/teko/600.css';
+@import '@fontsource/charis-sil/400.css';
 @import 'lenis/dist/lenis.css';
 
 :root {
@@ -22,6 +23,7 @@
   --text: 'Literata Variable', 'Georgia', serif;
   --hand: 'Kalam', 'Comic Sans MS', cursive;
   --deva: 'Teko', 'Kalam', sans-serif;
+  --ipa: 'Charis SIL', 'Doulos SIL', 'Gentium Plus', serif;
 
   /* Bringhurst's classic scale, in px: 14 16 18 21 24 36 48 60 72 */
   --s-14: 0.875rem;

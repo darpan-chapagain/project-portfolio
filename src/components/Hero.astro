@@ -50,12 +50,27 @@ const [neFirst, neLast] = person.nepaliFull;
         </span>
       </h1>
       <div class="entry">
-        <p class="pron"><span>[{person.pronunciation}]</span> <em>noun</em></p>
+        <p class="pron">
+          <span class="syll">{person.syllables}</span>
+          <span class="ipa">{person.ipa}</span>
+          <em>noun</em>
+        </p>
+        <p class="say">say it: <span class="hand">{person.sayIt}</span></p>
         <ol>
           <li>A technical product manager with four years of shipping software, most recently banking systems that aren't allowed to fail.</li>
           <li>Now an M.S. Computer Science student at {person.school} in {person.location}, building on-device AI and the odd video game on the side.</li>
         </ol>
-        <p class="etym">From Nepali <span lang="ne">{person.nepali}</span>, a mirror.</p>
+        <p class="note"><span class="lab">Usage:</span> the second syllable of Darpan rhymes with <em>sun</em>, not <em>pan</em>.</p>
+        <details class="history">
+          <summary class="note">
+            <span class="lab">Origin:</span> Nepali <span class="ne-word" lang="ne">{person.nepali}</span>, a mirror.
+            <span class="more hand">word history</span>
+          </summary>
+          <div class="history-body">
+            <p>From Sanskrit <em>darpaṇa</em>, literally &ldquo;the thing that makes you proud&rdquo;, which is fair, since nobody walks past one without a look. I've taken it as a brief: do work I'd be proud to see reflected back, and make the big calls in my career and life the same way.</p>
+            <p><span class="lab">See also:</span> <em>jindagi darpan chhaya</em>, &ldquo;life is a reflection in a mirror.&rdquo; A reflection is only as clear as the glass. Most of my work is cleaning the glass: clean data, clear specs, no surprises.</p>
+          </div>
+        </details>
       </div>
     </div>
   </div>
@@ -103,6 +118,8 @@ const [neFirst, neLast] = person.nepaliFull;
   const auto = () => { if (!reduce.matches) flipTimer = window.setInterval(flip, 4200); };
   name?.addEventListener('click', () => { window.clearInterval(flipTimer); flip(); auto(); });
   window.setTimeout(() => { if (!reduce.matches) { flip(); auto(); } }, 2600);
+
+  document.querySelector('.hero .history')?.addEventListener('toggle', () => window.dispatchEvent(new Event('resize')));
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { stop(); window.clearInterval(flipTimer); }
@@ -226,13 +243,62 @@ const [neFirst, neLast] = person.nepaliFull;
     color: var(--paper);
     animation: fade 1.2s var(--ease) 700ms both;
   }
-  .pron { margin: 0 0 0.6rem; color: var(--paper-dim); font-size: var(--s-16); border-bottom: 1px solid rgb(214 207 191 / 0.3); padding-bottom: 0.6rem; }
-  .pron em { margin-left: 0.4rem; }
+  .pron {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.9rem;
+    font-size: var(--s-16);
+    color: var(--paper-dim);
+  }
+  .syll { color: var(--paper); font-weight: 600; letter-spacing: 0.01em; }
+  .ipa { font-family: var(--ipa); font-size: 1.04em; letter-spacing: 0.01em; }
+  .say {
+    margin: 0.2rem 0 0.7rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgb(214 207 191 / 0.3);
+    font-size: var(--s-16);
+    color: var(--paper-dim);
+  }
+  .say .hand { color: var(--paper); font-size: 1.12em; margin-left: 0.2rem; }
   .entry ol { margin: 0; padding-left: 1.3rem; font-size: var(--s-18); }
   .entry li + li { margin-top: 0.4rem; }
   .entry li::marker { color: var(--paper-dim); font-size: var(--s-16); }
-  .etym { margin: 0.9rem 0 0; color: var(--paper-dim); font-size: var(--s-16); font-style: italic; }
-  .etym span { font-family: var(--hand); font-style: normal; font-size: 1.15em; color: var(--paper); }
+  .note { margin: 0.8rem 0 0; color: var(--paper-dim); font-size: var(--s-16); }
+  .note em { color: var(--paper); }
+  .lab { font-style: italic; color: var(--paper); margin-right: 0.15rem; }
+  .ne-word { font-family: var(--hand); font-size: 1.15em; color: var(--paper); }
+
+  .history summary {
+    list-style: none;
+    cursor: pointer;
+    margin-top: 0.35rem;
+  }
+  .history summary::-webkit-details-marker { display: none; }
+  .more {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: var(--paper);
+    font-size: 1.05em;
+    border-bottom: 1px dashed var(--chalk-2);
+    line-height: 1.2;
+  }
+  .more::after { content: ' +'; }
+  .history[open] .more::after { content: ' \2212'; }
+  .history summary:hover .more { border-bottom-color: var(--paper); }
+  .history-body {
+    margin-top: 0.7rem;
+    padding: 0.2rem 0 0.2rem 1rem;
+    border-left: 1px solid rgb(214 207 191 / 0.35);
+    font-size: var(--s-16);
+    color: var(--chalk);
+    max-width: 50ch;
+  }
+  .history-body p { margin: 0 0 0.7rem; }
+  .history-body p:last-child { margin-bottom: 0; }
+  .history[open] .history-body { animation: unfold 520ms var(--ease) both; }
+  @keyframes unfold { from { opacity: 0; transform: translateY(-6px); clip-path: inset(0 0 100% 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
 
   .scroll-cue {
     position: absolute;
@@ -260,11 +326,11 @@ const [neFirst, neLast] = person.nepaliFull;
     .hero-inner { grid-template-columns: 1fr; justify-items: start; gap: 2.5rem; }
     .intro { order: -1; }
     .reel-wrap { width: min(260px, 70vw); justify-self: center; }
-    .d-dial, .d-plane, .d-book, .d-biplane, .fl-d { display: none; }
+    .d-dial, .d-plane, .d-book, .d-biplane, .d-star, .fl-d { display: none; }
     .fl-m { display: block; }
     .hero-flags { top: 66px; }
     .d-peaks { bottom: 3%; width: 240px; opacity: 0.6; }
-    .hub { opacity: 0.6; }
+    .hub { display: none; }
     .scroll-cue { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
