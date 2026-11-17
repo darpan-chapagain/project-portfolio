@@ -287,6 +287,8 @@ export const heroFrames = [
 ];
 
 export type Level = {
+  /** Stable key. The game at /play looks up this level's script in src/data/game.ts by it. */
+  id: string;
   n: number;
   place: string;
   when: string;
@@ -300,6 +302,7 @@ export type Level = {
 
 export const levels: Level[] = [
   {
+    id: 'islington',
     n: 1,
     place: 'Kathmandu',
     when: 'Until 2023',
@@ -312,6 +315,7 @@ export const levels: Level[] = [
     unlocked: ['Computing degree, First Class'],
   },
   {
+    id: 'proshore',
     n: 2,
     place: 'Remote, US client',
     when: 'Jan 2021 to Jul 2023',
@@ -326,6 +330,7 @@ export const levels: Level[] = [
     projects: ['e-commerce-marketplace-integration-and-synchronization-platform'],
   },
   {
+    id: 'f1soft',
     n: 3,
     place: 'Kathmandu',
     when: 'Aug 2023 to Jan 2024',
@@ -337,6 +342,7 @@ export const levels: Level[] = [
     projects: ['large-scale-banking-data-migration-and-validation'],
   },
   {
+    id: 'amnil',
     n: 4,
     place: 'Kathmandu',
     when: 'Mar 2024 to May 2025',
@@ -358,6 +364,7 @@ export const levels: Level[] = [
     ],
   },
   {
+    id: 'flight',
     n: 5,
     place: 'Kathmandu to Ohio',
     when: '2025',
@@ -368,6 +375,7 @@ export const levels: Level[] = [
     ],
   },
   {
+    id: 'wright-state',
     n: 6,
     place: 'Fairborn, Ohio',
     when: 'Now',
