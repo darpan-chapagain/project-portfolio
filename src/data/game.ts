@@ -50,9 +50,13 @@ export type Beat = {
   /** Hold the player still until the lines are done. */
   lock?: boolean;
   /** Special moments the game knows how to play. */
-  action?: 'levelUp' | 'join' | 'leaveParty' | 'roof' | 'farewell' | 'lookBack' | 'mirror' | 'unmask';
+  action?: 'levelUp' | 'join' | 'leaveParty' | 'goHome' | 'farewell' | 'lookBack' | 'mirror';
   /** For `join`: index into this level's npcs. For `mirror`: index into props. */
   target?: number;
+  /** For `farewell`: who starts crying, and at which line (0 is the first). 'me' is the player. */
+  cry?: Record<string, number>;
+  /** For `farewell`: who hugs the player at the end, in order. */
+  hug?: string[];
 };
 
 export type LevelScript = {
@@ -60,7 +64,8 @@ export type LevelScript = {
   length: number;
   building: { type: BuildingType; at: number; sign: string; note?: string };
   props?: { type: PropType; at: number; label?: string; clear?: boolean }[];
-  npcs?: { who: string; at: number; facing?: 1 | -1; mask?: boolean; party?: boolean; wave?: boolean }[];
+  /** `inside`: starts inside the family home and comes out during the farewell. */
+  npcs?: { who: string; at: number; facing?: 1 | -1; mask?: boolean; party?: boolean; wave?: boolean; inside?: boolean }[];
   /** Day and night flip, faster and faster, between these two points. */
   nightCycle?: { from: number; to: number };
   beats?: Beat[];
@@ -181,22 +186,27 @@ export const script: Record<string, LevelScript> = {
     length: 1260,
     building: { type: 'airport', at: 600, sign: 'KTM AIRPORT' },
     props: [{ type: 'flags', at: 20 }, { type: 'familyhome', at: 80 }],
+    // Everyone starts inside. They come out in this order after the night on the terrace,
+    // and stand at `at`, between the front door and you.
     npcs: [
-      { who: 'hajurbuwa', at: 176, facing: -1 },
-      { who: 'hajuraama', at: 192, facing: -1 },
-      { who: 'buwa', at: 210, facing: -1 },
-      { who: 'aama', at: 226, facing: -1 },
-      { who: 'bhai', at: 242, facing: -1 },
+      { who: 'bhai', at: 218, inside: true },
+      { who: 'aama', at: 202, inside: true },
+      { who: 'buwa', at: 186, inside: true },
+      { who: 'hajuraama', at: 170, inside: true },
+      { who: 'hajurbuwa', at: 155, inside: true },
     ],
     beats: [
       {
+        // walk in the front door, up the stairs, out onto the terrace for the night
         at: 120,
-        action: 'roof',
+        action: 'goHome',
         lines: [{ text: 'Is this it?' }, { text: 'I can do more.' }, { text: 'I want to learn more.' }],
       },
       {
-        at: 156,
+        at: 150,
         action: 'farewell',
+        cry: { hajuraama: 0, aama: 1, me: 3, bhai: 4 },
+        hug: ['aama', 'bhai'],
         lines: [
           { who: 'hajuraama', text: 'Hajuraama puts tika on your forehead.', narrate: true },
           { who: 'aama', text: 'Eat on time. Call every day.' },

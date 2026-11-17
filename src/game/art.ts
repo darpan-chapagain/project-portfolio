@@ -1,5 +1,6 @@
 // Pixel art for /play: a theme-aware palette, a tiny pen, a 3x5 font and the people.
 // Everything is drawn from text, so there are no image files to load.
+import { HERO_FRAMES, SUITCASE } from './heroes';
 
 export const W = 320;
 export const H = 180;
@@ -18,6 +19,19 @@ export type Pal = {
   blue: string;
   green: string;
   shade: string;
+  skin: string;
+  skinShade: string;
+  hair: string;
+  eye: string;
+  yellowShade: string;
+  blueShade: string;
+  redShade: string;
+  greenShade: string;
+  darkGrey: string;
+  grey: string;
+  cream: string;
+  wood: string;
+  tear: string;
 };
 
 /** Read the site's own colours so the game follows the light or dark theme. */
@@ -41,6 +55,19 @@ export function readPal(): Pal {
     blue: dark ? '#86a3c7' : '#5f7fa8',
     green: dark ? '#8fb487' : '#5f8a5a',
     shade: dark ? 'rgba(0,0,0,0.5)' : 'rgba(28,25,21,0.42)',
+    skin: '#c98f63',
+    skinShade: '#a06a45',
+    hair: '#2e2925',
+    eye: '#1c1915',
+    yellowShade: '#c4a43c',
+    blueShade: dark ? '#4f6e98' : '#3c587e',
+    redShade: '#86392a',
+    greenShade: '#3f6a3c',
+    darkGrey: dark ? '#5a554c' : '#4d483f',
+    grey: '#b9b3a7',
+    cream: '#efe4c6',
+    wood: '#c98a3e',
+    tear: '#7fb6ea',
   };
 }
 
@@ -178,6 +205,8 @@ const FONT: Record<string, string[]> = {
 
 const CH: Record<string, keyof Pal> = {
   k: 'line', w: 'fill', g: 'mid', y: 'yellow', r: 'red', b: 'blue', n: 'green',
+  s: 'skin', S: 'skinShade', h: 'hair', e: 'eye', Y: 'yellowShade', B: 'blueShade', R: 'redShade',
+  N: 'greenShade', G: 'darkGrey', H: 'grey', c: 'cream', o: 'wood', t: 'tear',
 };
 
 export type Sprite = HTMLCanvasElement;
@@ -239,14 +268,15 @@ class Grid {
 }
 
 // People are 12 wide and 18 tall, facing right. 'h' is hair, recoloured per person.
+// Everyone in the background: 12 wide, 18 tall, simpler than the player and the family.
 const HEAD = [
-  '....hhhh....',
-  '...hhhhhhh..',
-  '..hhhhhhhhh.',
-  '..hhhwwwwwk.',
-  '..hhwwwwkwk.',
-  '..khwwwwwwk.',
-  '...kwwwwwk..',
+  '....kkkk....',
+  '...khhhhhk..',
+  '..khhhhhhhk.',
+  '..khhhsssssk',
+  '..khhsssesk.',
+  '..khSsssssk.',
+  '...kSssssk..',
   '....kkkkk...',
 ];
 
@@ -272,7 +302,7 @@ const LEGS: Record<string, string[]> = {
 const SKIRT = (c: string) => [`...k${c}${c}${c}${c}${c}k..`, `...k${c}${c}${c}${c}${c}k..`, `..k${c}${c}${c}${c}${c}${c}${c}k.`, '..kkkkkkkkk.'];
 
 export type Look = {
-  hair: 'k' | 'g';
+  hair: 'h' | 'H';
   style?: 'short' | 'long' | 'bun' | 'topi';
   body: keyof typeof BODIES;
   skirt?: string;
@@ -285,34 +315,27 @@ export type Look = {
 };
 
 export const LOOKS: Record<string, Look> = {
-  me: { hair: 'k', body: 'pack' },
-  meSenior: { hair: 'k', body: 'blazer' },
-  student: { hair: 'k', body: 'shirt', mask: true },
-  dev: { hair: 'k', body: 'hoodie' },
-  qa: { hair: 'k', style: 'long', body: 'green', glasses: true },
-  exec: { hair: 'g', body: 'suit', glasses: true },
-  intern: { hair: 'k', body: 'pack' },
-  intern2: { hair: 'k', style: 'long', body: 'shirt' },
-  junior: { hair: 'k', body: 'lanyard' },
-  junior2: { hair: 'k', style: 'bun', body: 'lanyard' },
-  aama: { hair: 'k', style: 'bun', body: 'sari', skirt: 'r' },
-  buwa: { hair: 'k', body: 'shirt', moustache: true },
-  hajuraama: { hair: 'g', style: 'bun', body: 'sariGreen', skirt: 'n' },
-  hajurbuwa: { hair: 'g', style: 'topi', body: 'daura', cane: true },
-  prof: { hair: 'g', body: 'shirt', glasses: true, beard: true },
-  friend: { hair: 'k', body: 'hoodie' },
-  friend2: { hair: 'k', style: 'long', body: 'green' },
+  student: { hair: 'h', body: 'shirt', mask: true },
+  dev: { hair: 'h', body: 'hoodie' },
+  qa: { hair: 'h', style: 'long', body: 'green', glasses: true },
+  exec: { hair: 'H', body: 'suit', glasses: true },
+  intern: { hair: 'h', body: 'pack' },
+  intern2: { hair: 'h', style: 'long', body: 'shirt' },
+  junior: { hair: 'h', body: 'lanyard' },
+  junior2: { hair: 'h', style: 'bun', body: 'lanyard' },
+  prof: { hair: 'H', body: 'shirt', glasses: true, beard: true },
+  friend: { hair: 'h', body: 'hoodie' },
+  friend2: { hair: 'h', style: 'long', body: 'green' },
 };
 
 function person(look: Look, legs: keyof typeof LEGS): string[] {
   const g = new Grid(12, 18);
   g.put(0, 0, HEAD);
-  if (look.style === 'long') g.put(2, 5, ['hh', 'hh', 'hh', 'hh', 'h']);
-  if (look.style === 'bun') g.put(1, 1, ['hh', 'hh']);
-  if (look.style === 'topi') g.put(2, 0, ['.kkkkkkk.', 'krygrygrk', ' hhhhhhhk']);
+  if (look.style === 'long') g.put(1, 5, ['khh', 'khh', 'khh', 'khh', '.k']);
+  if (look.style === 'bun') g.put(0, 1, ['kk', 'khk', '.k']);
   g.swap('h', look.hair);
-  if (look.glasses) g.put(6, 4, ['kkkk']);
-  if (look.moustache) g.put(7, 5, ['kkk']);
+  if (look.glasses) g.put(6, 4, ['eeee']);
+  if (look.moustache) g.put(7, 5, ['eee']);
   if (look.beard) g.put(4, 5, ['  gggg', ' ggggg', '  gggg']);
   if (look.mask) g.put(6, 5, ['bbbb', 'bbb']);
   if (look.tika) g.put(9, 3, ['r']);
@@ -323,43 +346,44 @@ function person(look: Look, legs: keyof typeof LEGS): string[] {
   return g.rows();
 }
 
-const BHAI = [
-  '...hhhh...',
-  '..hhhhhh..',
-  '.hhhwwwwk.',
-  '.hhwwwkwk.',
-  '.khwwwwwk.',
-  '..kwwwwk..',
-  '...kkkk...',
-  '...kyyyk..',
-  '..kyyyyyk.',
-  '..kyyykyk.',
-  '...kkkkk..',
-  '...kk.kk..',
-  '..kkk.kkk.',
-];
 
-export type Frames = { idle: Sprite; walkA: Sprite; walkB: Sprite; jump: Sprite };
+
+export type Frames = { idle: Sprite; walkA: Sprite; walkB: Sprite; jump: Sprite; cry: Sprite; hug: Sprite };
 export type FrameSet = { r: Frames; l: Frames; w: number; h: number };
 
+const POSES = ['idle', 'walkA', 'walkB', 'jump', 'cry', 'hug'] as const;
+
+function flipAll(r: Frames): Frames {
+  return Object.fromEntries(POSES.map((k) => [k, flipped(r[k])])) as Frames;
+}
+
+/** The player and the family have hand-drawn frames; everyone else is built from parts. */
 export function makePerson(key: string, pal: Pal, extra: Partial<Look> = {}): FrameSet {
-  if (key === 'bhai') {
-    const rows = BHAI.map((r) => r.replace(/h/g, 'k'));
-    const s = sprite(rows, pal);
-    const r: Frames = { idle: s, walkA: s, walkB: s, jump: s };
-    const fl = flipped(s);
-    return { r, l: { idle: fl, walkA: fl, walkB: fl, jump: fl }, w: 10, h: 13 };
+  if (HERO_FRAMES[`${key}:idle`]) {
+    const build = (pose: string) => {
+      const g = new Grid(HERO_FRAMES[`${key}:idle`][0].length, HERO_FRAMES[`${key}:idle`].length);
+      g.put(0, 0, HERO_FRAMES[`${key}:${pose}`]);
+      if (extra.mask) g.put(7, 8, ['bbbbb', 'bbbbb', 'bbbb']);
+      if (extra.tika) g.put(10, 6, ['r']);
+      return sprite(g.rows(), pal);
+    };
+    const r = Object.fromEntries(POSES.map((k) => [k, build(k)])) as Frames;
+    return { r, l: flipAll(r), w: r.idle.width, h: r.idle.height };
   }
   const look = { ...(LOOKS[key] ?? LOOKS.student), ...extra };
+  const idle = sprite(person(look, 'idle'), pal);
   const r: Frames = {
-    idle: sprite(person(look, 'idle'), pal),
+    idle,
     walkA: sprite(person(look, 'walkA'), pal),
     walkB: sprite(person(look, 'walkB'), pal),
     jump: sprite(person(look, 'jump'), pal),
+    cry: idle,
+    hug: idle,
   };
-  const l: Frames = { idle: flipped(r.idle), walkA: flipped(r.walkA), walkB: flipped(r.walkB), jump: flipped(r.jump) };
-  return { r, l, w: 12, h: 18 };
+  return { r, l: flipAll(r), w: 12, h: 18 };
 }
+
+export const suitcase = (pal: Pal) => sprite(SUITCASE, pal);
 
 // ---------------------------------------------------------------- objects
 

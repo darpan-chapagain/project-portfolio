@@ -1,6 +1,6 @@
 // The game loop for /play. Reads the level data the page hands it, builds one long street,
 // and plays it with keyboard, mouse or touch.
-import { W, H, G, Pen, readPal, type Pal, makePerson, type FrameSet, sprite, type Sprite, STAR, DIPLOMA } from './art';
+import { W, H, G, Pen, readPal, type Pal, makePerson, type FrameSet, sprite, type Sprite, STAR, DIPLOMA, suitcase } from './art';
 import * as S from './scenery';
 import type { Beat, Line, LevelScript } from '../data/game';
 
@@ -19,13 +19,14 @@ export type GameData = {
 };
 
 type Section = { i: number; level?: LevelData; s?: LevelScript; x0: number; x1: number; scene: string; kind: 'level' | 'sky' | 'end'; seed: number };
-type Thing = { kind: 'building' | 'prop' | 'kiosk' | 'mirror' | 'sequel'; x: number; w: number; type: string; sign?: string; note?: string; done?: boolean; clear?: boolean; active?: boolean };
-type Npc = { who: string; look: string; x: number; homeX: number; facing: 1 | -1; mask: boolean; party: boolean; joined: boolean; left: boolean; wave: boolean; y: number; vy: number; walking: boolean; order: number };
+type HomeState = { door?: number; hutDoor?: number; lit?: number[]; figures?: boolean; unpacked?: boolean };
+type Thing = { kind: 'building' | 'prop' | 'kiosk' | 'mirror' | 'sequel'; x: number; w: number; type: string; sign?: string; note?: string; done?: boolean; clear?: boolean; active?: boolean; st: HomeState };
+type Npc = { who: string; look: string; x: number; homeX: number; facing: 1 | -1; mask: boolean; party: boolean; joined: boolean; left: boolean; wave: boolean; inside: boolean; y: number; vy: number; walking: boolean; order: number };
 type Pickup = { x: number; y: number; label: string; got: boolean; kind: 'star' | 'diploma'; then?: string[] };
 type Boss = { look: string; name: string; x: number; min: number; max: number; dir: number; hp: number; maxHp: number; alive: boolean; hit: number; cd: number; gateX: number; gateOpen: number; beaten: string[]; reward?: LevelScript['reward']; section: number };
 type Door = { x: number; card: string };
 type Trigger = { x: number; fired: boolean; beat: Beat; section: number };
-type Particle = { x: number; y: number; vx: number; vy: number; life: number; col: 'line' | 'yellow' | 'mid' | 'red' };
+type Particle = { x: number; y: number; vx: number; vy: number; life: number; col: 'line' | 'yellow' | 'mid' | 'red' | 'tear' };
 
 const SPEED = 72;
 const GRAV = 620;
@@ -51,12 +52,13 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   let pal: Pal = readPal();
   let cache = new Map<string, FrameSet>();
-  let stars: Sprite, diploma: Sprite;
+  let stars: Sprite, diploma: Sprite, bag: Sprite;
   const paint = () => {
     pal = readPal();
     cache = new Map();
     stars = sprite(STAR, pal);
     diploma = sprite(DIPLOMA, pal);
+    bag = suitcase(pal);
   };
   paint();
   new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -92,14 +94,14 @@ export function startGame(root: HTMLElement, data: GameData) {
       const si = sec.i;
       const bw = S.BUILDING_W[s.building.type] ?? 90;
       const bx = x + s.building.at;
-      things.push({ kind: 'building', x: bx, w: bw, type: s.building.type, sign: s.building.sign, note: s.building.note });
+      things.push({ kind: 'building', x: bx, w: bw, type: s.building.type, sign: s.building.sign, note: s.building.note, st: {} });
       doors.push({ x: s.building.type === 'airport' ? bx + 65 : bx + bw / 2, card: lv.id });
       (s.props ?? []).forEach((pr) => {
-        things.push({ kind: pr.type === 'mirror' ? 'mirror' : 'prop', x: x + pr.at, w: S.PROP_W[pr.type] ?? 20, type: pr.type, clear: pr.clear });
+        things.push({ kind: pr.type === 'mirror' ? 'mirror' : 'prop', x: x + pr.at, w: S.PROP_W[pr.type] ?? 20, type: pr.type, clear: pr.clear, st: {} });
       });
       npcs[si] = (s.npcs ?? []).map((n, k) => ({
         who: n.who, look: data.cast[n.who]?.look ?? 'student', x: x + n.at, homeX: x + n.at, facing: n.facing ?? 1,
-        mask: !!n.mask, party: !!n.party, joined: false, left: false, wave: !!n.wave, y: G, vy: 0, walking: false, order: k,
+        mask: !!n.mask, party: !!n.party, joined: false, left: false, wave: !!n.wave, inside: !!n.inside, y: G, vy: 0, walking: false, order: k,
       }));
       (s.beats ?? []).forEach((b) => triggers.push({ x: x + b.at, fired: false, beat: b, section: si }));
       totalSkills += lv.skills.length;
@@ -116,7 +118,7 @@ export function startGame(root: HTMLElement, data: GameData) {
       if (s.deliver) {
         const per = s.deliver.total / s.deliver.at.length;
         s.deliver.at.forEach((a) => {
-          const thing: Thing = { kind: 'kiosk', x: x + a, w: 32, type: 'kiosk', done: false };
+          const thing: Thing = { kind: 'kiosk', x: x + a, w: 32, type: 'kiosk', done: false, st: {} };
           things.push(thing);
           kiosks.push({ thing, section: si, label: s.deliver!.label, total: s.deliver!.total, per, done: s.deliver!.done });
         });
@@ -133,13 +135,16 @@ export function startGame(root: HTMLElement, data: GameData) {
     });
     const last = sections[sections.length - 1];
     sections.push({ i: sections.length, x0: x, x1: x + 240, scene: last.scene === 'sky' ? 'city' : last.scene, kind: 'end', seed: 999 });
-    things.push({ kind: 'sequel', x: x + 40, w: 104, type: 'sequel' });
+    things.push({ kind: 'sequel', x: x + 40, w: 104, type: 'sequel', st: {} });
     doors.push({ x: x + 92, card: 'next' });
     worldEnd = x + 240;
   }
 
   // ------------------------------------------------------------ state
-  const player = { x: 24, y: G, vx: 0, vy: 0, ground: true, facing: 1 as 1 | -1, anim: 0, hidden: false, senior: false, tika: false, onRoof: null as null | { x: number; y: number } };
+  const player = { x: 24, y: G, vx: 0, vy: 0, ground: true, facing: 1 as 1 | -1, anim: 0, hidden: false, senior: false, tika: false, carry: false, walking: false, onRoof: null as null | { x: number; y: number } };
+  const crying = new Set<string>();
+  const hugging = new Set<string>();
+  let tearClock = 0;
   let plane = { x: 0, y: G, gear: true, active: false };
   let cam = 0;
   let camOverride: number | null = null;
@@ -164,7 +169,8 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   function reset() {
     build();
-    Object.assign(player, { x: 24, y: G, vx: 0, vy: 0, ground: true, facing: 1, hidden: false, senior: false, tika: false, onRoof: null });
+    Object.assign(player, { x: 24, y: G, vx: 0, vy: 0, ground: true, facing: 1, hidden: false, senior: false, tika: false, carry: false, walking: false, onRoof: null });
+    crying.clear(); hugging.clear();
     if (flight) plane = { x: flight.planeX, y: G, gear: true, active: false };
     cam = 0; camOverride = null; locks = 0; forcedNight = null; fade = 0; skillsGot = 0; delivered = 0; flown = false;
     history = []; particles = []; target = null; currentSection = -1;
@@ -226,10 +232,11 @@ export function startGame(root: HTMLElement, data: GameData) {
   function anchorFor(line: Line, sec: number): Anchor {
     if (line.who) {
       const n = (npcs[sec] ?? []).find((m) => m.who === line.who) ?? npcs.flat().find((m) => m.who === line.who);
-      if (n) return () => ({ x: n.x, y: n.y - (n.look === 'bhai' ? 16 : 21) });
+      if (n) return () => ({ x: n.x, y: n.y - frames(n.look).h - 4 });
     }
-    if (player.onRoof) { const r = player.onRoof; return () => ({ x: r.x, y: r.y - 22 }); }
-    return () => ({ x: player.x, y: player.y - 22 });
+    const ph = () => frames(playerLook()).h + 4;
+    if (player.onRoof) { const r = player.onRoof; return () => ({ x: r.x, y: r.y - ph() }); }
+    return () => ({ x: player.x, y: player.y - ph() });
   }
 
   async function say(line: Line, sec: number) {
@@ -319,10 +326,8 @@ export function startGame(root: HTMLElement, data: GameData) {
         if (m) m.active = true;
         break;
       }
-      case 'unmask':
-        break;
-      case 'roof':
-        await roof(tr);
+      case 'goHome':
+        await goHome(tr);
         return;
       case 'farewell':
         await farewell(tr);
@@ -350,63 +355,159 @@ export function startGame(root: HTMLElement, data: GameData) {
     return things.find((th) => th.x === s.x0 + pr.at && th.type === pr.type);
   }
 
-  async function roof(tr: Trigger) {
+  async function walkPlayer(to: number, roof = false) {
+    const get = () => (roof && player.onRoof ? player.onRoof.x : player.x);
+    const set = (v: number) => { if (roof && player.onRoof) player.onRoof.x = v; else player.x = v; };
+    player.walking = true;
+    while (Math.abs(get() - to) > 1) {
+      const dt = await nextFrame();
+      const d = Math.sign(to - get());
+      player.facing = d as 1 | -1;
+      set(get() + d * Math.min(Math.abs(to - get()), SPEED * 0.8 * dt));
+      player.anim += SPEED * 0.8 * dt;
+    }
+    player.walking = false;
+  }
+
+  async function tweenNight(from: number, to: number, sec: number) {
+    let k = 0;
+    while (k < 1) {
+      k = Math.min(1, k + (await nextFrame()) / sec);
+      forcedNight = from + (to - from) * k;
+    }
+    if (to === 0) forcedNight = null;
+  }
+
+  // In the front door, up the stairs (the lights follow you), out onto the terrace for the night,
+  // then down again in the morning with a suitcase. The family comes out after you.
+  async function goHome(tr: Trigger) {
     const sec = sections[tr.section];
     const home = things.find((th) => th.type === 'familyhome' && th.x >= sec.x0 && th.x < sec.x1);
+    if (!home) return;
+    const st = home.st;
+    const doorX = home.x + 68;
     lock();
     player.vx = 0;
-    await fadeTo(1, 0.7);
-    forcedNight = 1;
-    if (home) player.onRoof = { x: home.x + 30, y: G - 56 };
+    camOverride = home.x - 90;
+    await walkPlayer(doorX);
+    st.door = 1;
+    await wait(0.35, false);
     player.hidden = true;
-    camOverride = home ? home.x - 110 : null;
-    await fadeTo(0, 0.7);
-    for (const l of tr.beat.lines ?? []) await say(l, tr.section);
+    await wait(0.3, false);
+    st.door = 0;
+    void tweenNight(0, 1, 2.8);
+    await wait(0.4, false);
+    st.lit = [1];
     await wait(0.6, false);
-    await fadeTo(1, 0.7);
-    forcedNight = null;
-    player.onRoof = null;
-    player.hidden = false;
+    st.lit = [1, 4];
+    await wait(0.6, false);
+    st.hutDoor = 1;
+    await wait(0.3, false);
+    player.onRoof = { x: home.x + 16, y: G - 56 };
+    await wait(0.3, false);
+    st.hutDoor = 0;
+    await walkPlayer(home.x + 47, true);
     player.facing = 1;
-    player.x = home ? home.x + 78 : player.x;
-    camOverride = null;
-    await fadeTo(0, 0.7);
+    st.lit = [0, 1, 2, 3, 4];
+    for (const l of tr.beat.lines ?? []) await say(l, tr.section);
+    await wait(0.9, false);
+    void tweenNight(1, 0, 2.4);
+    await wait(1.3, false);
+    await walkPlayer(home.x + 16, true);
+    st.hutDoor = 1;
+    await wait(0.3, false);
+    player.onRoof = null;
+    await wait(0.3, false);
+    st.hutDoor = 0;
+    st.lit = [3];
+    await wait(0.5, false);
+    st.lit = [1];
+    await wait(0.5, false);
+    st.lit = undefined;
+    st.door = 1;
+    await wait(0.3, false);
+    player.x = doorX;
+    player.hidden = false;
+    player.carry = true;
+    camOverride = home.x - 40;
+    // stand a little way past where the family will gather
+    const spots = (npcs[tr.section] ?? []).filter((n) => n.inside).map((n) => n.homeX);
+    await walkPlayer((spots.length ? Math.max(...spots) : doorX) + 16);
+    player.facing = -1;
+    await wait(0.5, false);
+    // one by one, they come out
+    const out = (npcs[tr.section] ?? []).filter((n) => n.inside);
+    for (const n of out) {
+      n.x = doorX;
+      n.inside = false;
+      void walkNpc(n, n.homeX, n.look === 'bhai' ? 60 : n.look.startsWith('hajur') ? 26 : 40);
+      await wait(0.55, false);
+    }
+    while (out.some((n) => n.walking)) await nextFrame();
+    out.forEach((n) => { n.facing = 1; });
+    st.door = 0;
     unlock();
   }
 
   async function farewell(tr: Trigger) {
     const list = npcs[tr.section] ?? [];
+    const b = tr.beat;
     lock();
     player.vx = 0;
-    player.facing = 1;
-    for (const l of tr.beat.lines ?? []) {
+    player.facing = -1;
+    const lines = b.lines ?? [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      Object.entries(b.cry ?? {}).forEach(([who, at]) => { if (at === i) crying.add(who); });
       if (l.narrate && l.who) {
         const n = list.find((m) => m.who === l.who);
         if (n) {
           const from = n.x;
-          await walkNpc(n, player.x + 13);
+          await walkNpc(n, player.x - 11, 30);
+          n.facing = 1;
           player.tika = true;
-          burst(player.x + 4, player.y - 16, 'red', 6);
-          void say(l, tr.section);
+          burst(player.x - 3, player.y - 17, 'red', 5);
+          ui.caption.textContent = l.text;
+          ui.caption.hidden = false;
           await wait(lineTime(l) + 0.4);
-          await walkNpc(n, from);
-          n.facing = -1;
+          ui.caption.hidden = true;
+          await walkNpc(n, from, 30);
+          n.facing = 1;
           continue;
         }
       }
       await say(l, tr.section);
     }
+    // the hugs
+    for (const who of b.hug ?? []) {
+      const n = list.find((m) => m.who === who);
+      if (!n) continue;
+      const from = n.x;
+      await walkNpc(n, player.x - (n.look === 'bhai' ? 9 : 10), n.look === 'bhai' ? 70 : 40);
+      n.facing = 1;
+      hugging.add(who);
+      hugging.add('me');
+      await wait(2.4);
+      hugging.delete(who);
+      hugging.delete('me');
+      await walkNpc(n, from, 40);
+      n.facing = 1;
+    }
     list.forEach((n) => { n.wave = true; });
+    await wait(0.7, false);
+    player.facing = 1;
+    camOverride = null;
     unlock();
   }
 
-  async function walkNpc(n: Npc, to: number) {
+  async function walkNpc(n: Npc, to: number, speed = 40) {
     n.walking = true;
     n.facing = to < n.x ? -1 : 1;
     while (Math.abs(n.x - to) > 1) {
       const dt = await nextFrame();
-      n.x += Math.sign(to - n.x) * Math.min(Math.abs(to - n.x), 40 * dt);
+      n.x += Math.sign(to - n.x) * Math.min(Math.abs(to - n.x), speed * dt);
     }
+    n.x = to;
     n.walking = false;
   }
 
@@ -414,11 +515,16 @@ export function startGame(root: HTMLElement, data: GameData) {
     lock();
     player.vx = 0;
     await wait(0.3, false);
-    camOverride = player.x - 255;
+    // frame the whole family waving, with you at the right edge
+    const sec = sections[currentSection];
+    const wavers = (npcs[sec?.i ?? -1] ?? []).filter((n) => n.wave && !n.inside);
+    const left = wavers.length ? Math.min(...wavers.map((n) => n.x)) : player.x - 230;
+    camOverride = Math.max(left - 24, player.x - 300);
     player.facing = -1;
-    await wait(2.2);
+    await wait(2.4);
     player.facing = 1;
     await wait(0.4, false);
+    crying.delete('me');
     camOverride = null;
     unlock();
   }
@@ -716,7 +822,7 @@ export function startGame(root: HTMLElement, data: GameData) {
           n.walking = Math.abs(mv) > 0.4;
           if (n.walking) n.facing = mv > 0 ? 1 : -1;
           n.x += mv * Math.min(1, dt * 10);
-        } else if (!n.walking && !n.left && Math.abs(n.x - player.x) < 60) {
+        } else if (!n.walking && !n.left && !n.inside && locks === 0 && Math.abs(n.x - player.x) < 60) {
           n.facing = player.x < n.x ? -1 : 1;
         }
         if (n.vy !== 0 || n.y < G) {
@@ -727,8 +833,27 @@ export function startGame(root: HTMLElement, data: GameData) {
       }
     }
 
+    // tears
+    tearClock -= dt;
+    if (tearClock <= 0 && crying.size) {
+      tearClock = 0.28;
+      const eye = (x: number, y: number, h: number, facing: number) => {
+        particles.push({ x: x + facing * 3 + (Math.random() - 0.5), y: y - h + 9, vx: facing * 6, vy: 10, life: 0.5, col: 'tear' });
+      };
+      if (crying.has('me') && !player.hidden) {
+        const r = player.onRoof;
+        eye(r ? r.x : player.x, r ? r.y : player.y, frames(playerLook()).h, player.facing);
+      }
+      npcs.flat().forEach((n) => { if (n && crying.has(n.who) && !n.inside) eye(n.x, n.y, frames(n.look).h, n.facing); });
+    }
+    // the suitcase stays in the new apartment
+    if (player.carry && flown) {
+      const apt = things.find((th) => th.type === 'apartment');
+      if (apt && player.x > apt.x + 34) { player.carry = false; apt.st.unpacked = true; }
+    }
+
     // particles
-    particles = particles.filter((q) => (q.life -= dt) > 0);
+    particles = particles.filter((q) => (q.life -= dt) > 0 && !(q.col === 'tear' && q.y >= G - 1));
     for (const q of particles) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 160 * dt; }
 
     // night: forced for the roof, or flipping faster and faster across a stretch
@@ -817,7 +942,10 @@ export function startGame(root: HTMLElement, data: GameData) {
       const sx = th.x - c;
       if (sx > W + 20 || sx + th.w < -60) continue;
       if (th.kind === 'building') S.building(pen, pal, th.type, sx, th.sign ?? '', th.note, t, night);
-      else if (th.kind === 'prop') S.prop(pen, pal, th.type, sx, t, night);
+      else if (th.kind === 'prop') {
+        const family = th.type === 'familyhome' && npcs.flat().some((n) => n?.inside);
+        S.prop(pen, pal, th.type, sx, t, night, { ...th.st, figures: family });
+      }
       else if (th.kind === 'kiosk') S.kiosk(pen, pal, sx, !!th.done, t);
       else if (th.kind === 'mirror') S.mirrorFrame(pen, pal, sx);
       else if (th.kind === 'sequel') S.sequel(pen, pal, sx, data.sequel.n, data.sequel.poster);
@@ -863,7 +991,11 @@ export function startGame(root: HTMLElement, data: GameData) {
     // people
     for (const list of npcs) {
       if (!list) continue;
-      for (const n of list) drawPerson(n.look, n.x - c, n.y, n.facing, n.walking, n.y < G, n.mask ? { mask: true } : {}, n.wave);
+      for (const n of list) {
+        if (n.inside) continue;
+        const pose = hugging.has(n.who) ? 'hug' : crying.has(n.who) && !n.walking ? 'cry' : undefined;
+        drawPerson(n.look, n.x - c, n.y, n.facing, n.walking, n.y < G, n.mask ? { mask: true } : {}, n.wave && !hugging.has(n.who), t * 60, pose);
+      }
     }
     // mirrors: a scribble at first, then a clear reflection
     for (const th of things) {
@@ -890,10 +1022,12 @@ export function startGame(root: HTMLElement, data: GameData) {
       ctx.restore();
     }
     // the player, or the player sitting on the roof
-    if (player.onRoof) drawPerson(playerLook(), player.onRoof.x - c, player.onRoof.y, 1, false, false, playerExtra());
+    const myPose = (moving: boolean) => (hugging.has('me') ? 'hug' : crying.has('me') && !moving ? 'cry' : undefined);
+    if (player.onRoof) drawPerson(playerLook(), player.onRoof.x - c, player.onRoof.y, player.facing, player.walking, false, playerExtra(), false, player.anim, myPose(player.walking));
     if (!player.hidden) {
-      const moving = Math.abs(player.vx) > 1 && player.ground;
-      drawPerson(playerLook(), player.x - c, player.y, player.facing, moving, !player.ground, playerExtra(), false, player.anim);
+      const moving = (Math.abs(player.vx) > 1 && player.ground) || player.walking;
+      drawPerson(playerLook(), player.x - c, player.y, player.facing, moving, !player.ground, playerExtra(), false, player.anim, myPose(moving));
+      if (player.carry) ctx.drawImage(bag, Math.round(player.x - c + (player.facing === 1 ? 3 : -11)), G - 9);
     }
 
     // particles
@@ -933,12 +1067,13 @@ export function startGame(root: HTMLElement, data: GameData) {
     return { mask, tika: player.tika };
   };
 
-  function drawPerson(look: string, sx: number, y: number, facing: 1 | -1, moving: boolean, air: boolean, extra: Record<string, boolean> = {}, wave = false, anim = t * 60) {
+  function drawPerson(look: string, sx: number, y: number, facing: 1 | -1, moving: boolean, air: boolean, extra: Record<string, boolean> = {}, wave = false, anim = t * 60, pose?: 'cry' | 'hug') {
     if (sx < -16 || sx > W + 16) return;
     const f = frames(look, extra);
     const fr = facing === 1 ? f.r : f.l;
     let img = fr.idle;
-    if (air) img = fr.jump;
+    if (pose) img = fr[pose];
+    else if (air) img = fr.jump;
     else if (moving) img = Math.floor(anim / 7) % 2 ? fr.walkA : fr.walkB;
     const bob = moving && !air && Math.floor(anim / 7) % 2 ? -1 : 0;
     const x = Math.round(sx - f.w / 2), top = Math.round(y - f.h + bob);
@@ -946,9 +1081,10 @@ export function startGame(root: HTMLElement, data: GameData) {
     if (wave) {
       const up = Math.floor(t * 3) % 2;
       pen.c(pal.line);
-      const hx = facing === 1 ? x + f.w - 1 : x;
-      pen.rect(hx, top + 6 - up * 3, 2, 2);
-      pen.v(hx + (facing === 1 ? 0 : 1), top + 8 - up * 3, top + 10);
+      const hx = facing === 1 ? x + f.w - 2 : x;
+      const hy = top + Math.round(f.h * 0.42);
+      pen.c(pal.skin).rect(hx, hy - 5 - up * 3, 2, 2);
+      pen.c(pal.line).v(hx + (facing === 1 ? 0 : 1), hy - 3 - up * 3, hy);
     }
   }
 

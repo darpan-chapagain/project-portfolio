@@ -322,7 +322,8 @@ export const PROP_W: Record<string, number> = {
 };
 
 export function prop(
-  p: Pen, pal: Pal, type: string, sx: number, t: number, night: number, opts: { lit?: boolean } = {},
+  p: Pen, pal: Pal, type: string, sx: number, t: number, night: number,
+  opts: { lit?: number[]; door?: number; hutDoor?: number; figures?: boolean; unpacked?: boolean; lamp?: boolean } = {},
 ) {
   const L = pal.line, F = pal.fill;
   if (type === 'stupa') {
@@ -392,24 +393,46 @@ export function prop(
     p.v(sx + 51, G - 4, G); p.v(sx + 58, G - 4, G);
     if (night > 0.5) p.c(pal.yellow).rect(sx + 4, G - 24, 4, 4);
   } else if (type === 'familyhome') {
+    // A Kathmandu house: two floors, a terrace with a stair hut, and a black water tank.
     const w = 84, top = G - 56;
     p.panel(sx, top, w, 57, F, L);
-    p.c(L).h(sx - 2, sx + w + 1, top); p.h(sx - 2, sx + w + 1, top - 4);
-    p.v(sx - 2, top - 4, top); p.v(sx + w + 1, top - 4, top);
-    p.h(sx, sx + w - 1, G - 28);
-    const lit = night > 0.5;
-    for (const [x, y] of [[sx + 8, top + 8], [sx + 34, top + 8], [sx + 60, top + 8], [sx + 8, G - 22], [sx + 34, G - 22]]) {
-      p.panel(x, y, 14, 12, lit ? pal.yellow : pal.bg, L);
+    p.c(L).h(sx, sx + w - 1, G - 28);
+    // terrace railing
+    p.c(L).h(sx - 2, sx + w + 1, top);
+    p.h(sx - 2, sx + w + 1, top - 5);
+    for (let x = sx - 2; x <= sx + w + 1; x += 6) p.v(x, top - 5, top);
+    // stair hut on the left of the terrace, with its own little door
+    p.panel(sx + 4, top - 18, 24, 18, F, L);
+    p.c(L).h(sx + 2, sx + 29, top - 18);
+    p.panel(sx + 12, top - 13, 9, 13, (opts.hutDoor ?? 0) > 0.5 ? L : pal.bg, L);
+    // water tank
+    p.panel(sx + 62, top - 17, 13, 12, L, L);
+    p.c(F).h(sx + 63, sx + 73, top - 14);
+    p.c(L).v(sx + 64, top - 5, top - 1); p.v(sx + 73, top - 5, top - 1);
+    // windows: lit ones glow, and at night the family shows as shapes inside
+    const wins = [[sx + 8, G - 22], [sx + 34, G - 22], [sx + 8, top + 8], [sx + 34, top + 8], [sx + 58, top + 8]];
+    const lit = opts.lit ?? (night > 0.5 ? [0, 1, 2, 3, 4] : []);
+    wins.forEach(([x, y], i) => {
+      const on = lit.includes(i);
+      p.panel(x, y, 14, 12, on ? pal.yellow : pal.bg, L);
+      if (on && opts.figures && (i === 1 || i === 3 || i === 4)) {
+        p.c('#2b2614');
+        const fx = x + 4 + (i % 2) * 2;
+        p.rect(fx, y + 4, 4, 3); p.rect(fx - 1, y + 7, 6, 4);
+        if (i === 1) { p.rect(fx + 6, y + 6, 3, 2); p.rect(fx + 5, y + 8, 5, 3); }
+      }
       p.c(L).v(x + 7, y, y + 11);
-    }
-    door(p, pal, sx + 68, 14, 22);
-    // black water tank on the roof, like half of Kathmandu
-    p.panel(sx + 60, top - 16, 13, 12, L, L);
-    p.c(F).h(sx + 61, sx + 71, top - 13);
-    // prayer flags from the tank to the corner
+    });
+    // front door, open or shut
+    const open = opts.door ?? 0;
+    if (open > 0.5) {
+      p.panel(sx + 61, G - 22, 14, 23, L, L);
+      p.c(pal.yellow).rect(sx + 63, G - 20, 10, 2);
+    } else door(p, pal, sx + 68, 14, 22);
+    // prayer flags from the tank to the stair hut
     const cols = [pal.blue, F, pal.red, pal.green, pal.yellow];
-    for (let i = 0; i < 12; i++) {
-      const x = sx + 4 + i * 5, y = top - 14 + Math.round(i * 0.5 + Math.sin(i / 3));
+    for (let i = 0; i < 8; i++) {
+      const x = sx + 30 + i * 4, y = top - 17 + Math.round(Math.sin(i / 2.5) * 2 + i * 0.3);
       p.c(cols[i % 5]).rect(x, y, 3, 3);
     }
   } else if (type === 'whiteboard') {
@@ -453,6 +476,10 @@ export function prop(
     // lamp
     p.c(L).v(sx + 120, G - 26, G);
     p.c(pal.yellow).rect(sx + 117, G - 30, 7, 4);
+    if (opts.unpacked) {
+      p.panel(sx + 39, G - 9, 7, 9, pal.redShade, L);
+      p.c(L).box(sx + 41, G - 11, 3, 2);
+    }
   } else if (type === 'studytable') {
     p.c(L).h(sx, sx + 43, G - 12);
     p.v(sx + 2, G - 11, G); p.v(sx + 41, G - 11, G);
@@ -465,7 +492,7 @@ export function prop(
   } else if (type === 'lamp') {
     p.c(L).v(sx + 3, G - 38, G);
     p.h(sx + 3, sx + 8, G - 38);
-    p.c(night > 0.3 || opts.lit ? pal.yellow : pal.mid).rect(sx + 6, G - 37, 4, 3);
+    p.c(night > 0.3 || opts.lamp ? pal.yellow : pal.mid).rect(sx + 6, G - 37, 4, 3);
   } else if (type === 'tree') {
     p.c(L).v(sx + 11, G - 14, G); p.v(sx + 12, G - 14, G);
     p.c(F).disc(sx + 12, G - 24, 11);

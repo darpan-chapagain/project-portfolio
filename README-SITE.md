@@ -32,6 +32,7 @@ Then add the custom domain `darpan-chapagain.com.np` under the Worker's Settings
 
 - Change a line: edit the `lines` in that level's `beats`.
 - Add a level: add it to `levels` in `site.ts` with a new `id`, then add a matching entry in `game.ts`. Without an entry it still appears as a short street with one building and its card.
+- The player and the family are drawn in `scripts/sprites/heroes.py` and exported to `src/game/heroes.ts`.
 - The engine lives in `src/game/` (`engine.ts` for play, `scenery.ts` for drawing, `art.ts` for people and the pixel font). It reads the site's colours, so it follows the light and dark theme.
 - Add `?debug` to the URL for a `__game` helper in the console (state and teleport).
 
