@@ -1,5 +1,6 @@
 ---
-// A string of prayer flags. The five traditional colours become five tones of paper.
+// A string of prayer flags moving in a slow breeze.
+// The five traditional colours become five tones of paper.
 interface Props { class?: string; count?: number; sag?: number; width?: number }
 const { class: cls = '', count = 23, sag = 30, width = 1000 } = Astro.props;
 
@@ -8,27 +9,57 @@ const tones = ['var(--paper)', 'var(--chalk-2)', 'var(--graphite)', 'transparent
 const point = (t: number) => {
   // quadratic bezier from (0,y0) via (W/2, y0+sag*2) to (W,y1)
   const cx = W / 2, cy = y0 + sag * 2;
-  const x = (1 - t) ** 2 * 0 + 2 * (1 - t) * t * cx + t ** 2 * W;
+  const x = 2 * (1 - t) * t * cx + t ** 2 * W;
   const y = (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t ** 2 * y1;
   const dx = 2 * (1 - t) * cx + 2 * t * (W - cx);
   const dy = 2 * (1 - t) * (cy - y0) + 2 * t * (y1 - cy);
   return { x, y, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
 };
+// Small per-flag differences so the breeze never looks mechanical.
+const amps = [1, 0.8, 1.15, 0.9, 1.05, 0.75, 1.1];
 const flags = Array.from({ length: count }, (_, i) => {
   const p = point((i + 0.5) / count);
-  return { ...p, tone: tones[i % tones.length], sway: (i % 3) - 1 };
+  return { ...p, tone: tones[i % tones.length], amp: amps[i % amps.length], i };
 });
 ---
 <svg class={`flags ${cls}`} viewBox={`0 0 ${W} ${y0 + sag * 2 + 60}`} preserveAspectRatio="none" aria-hidden="true">
-  <path d={`M0 ${y0} Q${W / 2} ${y0 + sag * 2} ${W} ${y1}`} fill="none" stroke="var(--chalk)" stroke-width="1" vector-effect="non-scaling-stroke" />
-  {flags.map((f) => (
-    <g transform={`translate(${f.x} ${f.y}) rotate(${f.angle + f.sway * 3})`}>
-      <rect x="-14" y="2" width="28" height="36" fill={f.tone} stroke="var(--chalk)" stroke-width="0.8" vector-effect="non-scaling-stroke" opacity="0.85" />
-      {f.tone === 'transparent' && <path d="M-10 10 H10 M-10 18 H10 M-10 26 H6" stroke="var(--chalk)" stroke-width="0.6" vector-effect="non-scaling-stroke" />}
-    </g>
-  ))}
+  <g class="line">
+    <path d={`M0 ${y0} Q${W / 2} ${y0 + sag * 2} ${W} ${y1}`} fill="none" stroke="var(--chalk)" stroke-width="1" vector-effect="non-scaling-stroke" />
+    {flags.map((f) => (
+      <g transform={`translate(${f.x} ${f.y}) rotate(${f.angle})`}>
+        <g class="flag" style={`--i:${f.i};--amp:${f.amp}`}>
+          <rect x="-14" y="2" width="28" height="36" fill={f.tone} stroke="var(--chalk)" stroke-width="0.8" vector-effect="non-scaling-stroke" opacity="0.85" />
+          {f.tone === 'transparent' && <path d="M-10 10 H10 M-10 18 H10 M-10 26 H6" stroke="var(--chalk)" stroke-width="0.6" vector-effect="non-scaling-stroke" />}
+        </g>
+      </g>
+    ))}
+  </g>
 </svg>
 
 <style>
-  .flags { width: 100%; height: auto; display: block; }
+  .flags { width: 100%; height: auto; display: block; overflow: visible; }
+
+  /* The whole string rises and settles a little, as if the breeze comes in gusts. */
+  .line { animation: gust 9s ease-in-out infinite alternate; }
+
+  /* Each flag swings from the string. The delay walks along the line, so the wind travels through it. */
+  .flag {
+    transform-box: view-box;
+    transform-origin: 0 2px;
+    animation: breeze 6.5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.32s);
+  }
+  @keyframes breeze {
+    0%, 100% { transform: rotate(calc(-4deg * var(--amp))) skewX(calc(2.5deg * var(--amp))) scaleX(1); }
+    30% { transform: rotate(calc(3deg * var(--amp))) skewX(calc(-2deg * var(--amp))) scaleX(0.95); }
+    60% { transform: rotate(calc(5deg * var(--amp))) skewX(calc(-3deg * var(--amp))) scaleX(0.98); }
+  }
+  @keyframes gust {
+    from { transform: translateY(-1px); }
+    to { transform: translateY(2px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .line, .flag { animation: none; }
+  }
 </style>

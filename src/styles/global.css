@@ -52,6 +52,8 @@ html {
   scroll-behavior: smooth;
 }
 html.smooth { scroll-behavior: auto; }
+/* Leave room for the sticky navbar when jumping to a section. */
+section[id] { scroll-margin-top: 72px; }
 
 body {
   margin: 0;

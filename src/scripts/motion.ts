@@ -9,9 +9,21 @@ const root = document.documentElement;
 /* ---------- Smooth scroll ---------- */
 let lenis: Lenis | null = null;
 if (!reduce) {
-  lenis = new Lenis({ lerp: 0.085, smoothWheel: true, anchors: { offset: -20 }, autoRaf: false });
+  lenis = new Lenis({ lerp: 0.085, smoothWheel: true, anchors: true, autoRaf: false });
   root.classList.add('smooth');
 }
+
+/* ---------- Sticky navbar ---------- */
+const topbar = document.querySelector<HTMLElement>('.topbar');
+let barTicking = false;
+const updateBar = () => {
+  topbar?.classList.toggle('scrolled', window.scrollY > 24);
+  barTicking = false;
+};
+window.addEventListener('scroll', () => {
+  if (!barTicking) { barTicking = true; requestAnimationFrame(updateBar); }
+}, { passive: true });
+updateBar();
 
 /* ---------- Reveal on scroll ---------- */
 const revealables = document.querySelectorAll<HTMLElement>('.echo, .echo-ring, [data-reveal]');
