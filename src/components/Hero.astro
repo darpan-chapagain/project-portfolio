@@ -1,0 +1,208 @@
+---
+import Doodle from './Doodle.astro';
+import Flags from './Flags.astro';
+import { person, heroFrames } from '../data/site';
+
+// Constellation: doodles and stars joined by thin lines (percent of the hero box).
+const stars = [
+  { x: 19, y: 22 }, { x: 27, y: 74 }, { x: 77, y: 12 }, { x: 70, y: 90 }, { x: 93, y: 52 }, { x: 4, y: 58 },
+];
+const lines = [
+  [9, 36, 19, 22], [19, 22, 30, 15], [88, 33, 77, 12], [77, 12, 64, 16],
+  [86, 80, 70, 90], [93, 52, 86, 80], [16, 84, 27, 74], [4, 58, 9, 36], [93, 52, 90, 30],
+];
+---
+<section class="hero" aria-labelledby="hero-name">
+  <div class="hero-flags"><Flags /></div>
+
+  <svg class="constellation" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    {lines.map(([x1, y1, x2, y2], i) => (
+      <line x1={x1} y1={y1} x2={x2} y2={y2} pathLength="1" style={`--i:${i}`} />
+    ))}
+    {stars.map((s) => <circle cx={s.x} cy={s.y} r="0.25" />)}
+  </svg>
+
+  <div class="d d-biplane"><Doodle name="biplane" /></div>
+  <div class="d d-peaks"><Doodle name="peaks" /></div>
+  <div class="d d-book"><Doodle name="book" /></div>
+  <div class="d d-dial"><Doodle name="dial" /></div>
+  <div class="d d-plane"><Doodle name="plane" /></div>
+  {stars.map((s, i) => (
+    <div class="d d-star" style={`left:${s.x}%;top:${s.y}%;--i:${i}`}><Doodle name="star" /></div>
+  ))}
+
+  <div class="hero-inner wrap">
+    <figure class="reel" aria-label="Snapshots from my story">
+      {heroFrames.map((f, i) => (
+        <div class:list={['frame torn', { 'is-on': i === 0 }]} data-frame={i}>
+          <Doodle name={f.art} class="frame-art" />
+          <figcaption class="hand">{f.caption}</figcaption>
+        </div>
+      ))}
+    </figure>
+
+    <div class="intro">
+      <h1 id="hero-name" class="display name">
+        <span>{person.first}</span>
+        <span>{person.last}</span>
+      </h1>
+      <div class="entry">
+        <p class="pron"><span>[{person.pronunciation}]</span> <em>noun</em></p>
+        <ol>
+          <li>A technical product manager with four years of shipping software, most recently banking systems that aren't allowed to fail.</li>
+          <li>Now an M.S. Computer Science student in {person.location}, building on-device AI and the odd video game on the side.</li>
+        </ol>
+        <p class="etym">From Nepali <span lang="ne">{person.nepali}</span>, a mirror.</p>
+      </div>
+    </div>
+  </div>
+
+  <a class="scroll-cue hand" href="#play">scroll, or press play below</a>
+</section>
+
+<script>
+  // Swap the snapshot in the torn frame, like cuts in a reel.
+  const frames = Array.from(document.querySelectorAll<HTMLElement>('.reel .frame'));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let i = 0;
+  let timer: number | undefined;
+  const tilt = [-4, 2.5, -1.5, 3.5, -3];
+  const step = () => {
+    frames[i].classList.remove('is-on');
+    i = (i + 1) % frames.length;
+    frames[i].style.setProperty('--tilt', `${tilt[i % tilt.length]}deg`);
+    frames[i].classList.add('is-on');
+  };
+  const start = () => { if (!reduce.matches && frames.length > 1) timer = window.setInterval(step, 2600); };
+  const stop = () => window.clearInterval(timer);
+  const reel = document.querySelector('.reel');
+  reel?.addEventListener('mouseenter', stop);
+  reel?.addEventListener('mouseleave', start);
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  start();
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: max(100svh, 720px);
+    display: grid;
+    place-items: center;
+    padding-block: 9rem 5rem;
+    overflow: hidden;
+    color: var(--chalk);
+  }
+  .hero-flags {
+    position: absolute;
+    top: 64px;
+    left: -2%;
+    width: 104%;
+    opacity: 0.55;
+    animation: fade 1.6s var(--ease) both;
+  }
+
+  .constellation { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .constellation line {
+    stroke: var(--chalk-2);
+    stroke-width: 0.8;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 3 7;
+    animation: fade 1.2s var(--ease) both;
+    animation-delay: calc(700ms + var(--i) * 90ms);
+  }
+  .constellation circle { fill: var(--chalk); }
+
+  .d { position: absolute; color: var(--chalk); animation: arrive 1.2s var(--ease) both; }
+  .d > :global(svg) { width: 100%; height: auto; animation: drift 9s ease-in-out infinite alternate; }
+  .d-biplane { top: 27%; right: 4%; width: clamp(140px, 16vw, 230px); animation-delay: 200ms; }
+  .d-biplane > :global(svg) { animation-duration: 7s; }
+  .d-peaks { bottom: 6%; left: 2%; width: clamp(200px, 26vw, 360px); animation-delay: 100ms; }
+  .d-peaks > :global(svg) { animation: none; }
+  .d-book { bottom: 11%; right: 7%; width: clamp(90px, 10vw, 150px); animation-delay: 350ms; }
+  .d-dial { top: 31%; left: 5%; width: clamp(54px, 6vw, 84px); animation-delay: 450ms; }
+  .d-plane { top: 52%; right: 2.5%; width: clamp(50px, 5vw, 76px); animation-delay: 550ms; }
+  .d-star { width: 12px; translate: -50% -50%; animation-delay: calc(500ms + var(--i) * 80ms); }
+  .d-star > :global(svg) { animation: twinkle 3.5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -0.6s); }
+
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 620px);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reel {
+    margin: 0;
+    position: relative;
+    aspect-ratio: 5 / 6;
+    animation: arrive 1s var(--ease) 250ms both;
+  }
+  .frame {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding: 1.6rem 1.4rem 1.2rem;
+    visibility: hidden;
+    transform: rotate(var(--tilt, -4deg));
+  }
+  .frame.is-on { visibility: visible; animation: cut 260ms steps(2, end); }
+  .frame :global(.frame-art) { width: 72%; height: 100%; max-height: 220px; margin: auto; color: var(--ink); }
+  .frame figcaption { font-size: var(--s-21); line-height: 1.25; color: var(--ink); }
+
+  .name {
+    font-size: clamp(4.75rem, 12vw, 10.5rem);
+    color: var(--paper);
+    display: flex;
+    flex-direction: column;
+    animation: echo 1300ms var(--ease) 150ms both;
+  }
+  .entry {
+    margin-top: 1.4rem;
+    max-width: 52ch;
+    color: var(--paper);
+    animation: fade 1.2s var(--ease) 700ms both;
+  }
+  .pron { margin: 0 0 0.6rem; color: var(--paper-dim); font-size: var(--s-16); border-bottom: 1px solid rgb(214 207 191 / 0.3); padding-bottom: 0.6rem; }
+  .pron em { margin-left: 0.4rem; }
+  .entry ol { margin: 0; padding-left: 1.3rem; font-size: var(--s-18); }
+  .entry li + li { margin-top: 0.4rem; }
+  .entry li::marker { color: var(--paper-dim); font-size: var(--s-16); }
+  .etym { margin: 0.9rem 0 0; color: var(--paper-dim); font-size: var(--s-16); font-style: italic; }
+  .etym span { font-family: var(--hand); font-style: normal; font-size: 1.15em; color: var(--paper); }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 1.6rem;
+    left: 50%;
+    translate: -50% 0;
+    font-size: var(--s-18);
+    color: var(--paper-dim);
+    text-decoration: none;
+    z-index: 3;
+    animation: fade 1s ease 1.6s both;
+  }
+
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes arrive { from { opacity: 0; transform: translateY(14px) scale(0.97); } to { opacity: 1; transform: none; } }
+  @keyframes drift { from { transform: translateY(-5px) rotate(-1deg); } to { transform: translateY(6px) rotate(1deg); } }
+  @keyframes twinkle { from { opacity: 0.35; transform: scale(0.7); } to { opacity: 1; transform: scale(1.15); } }
+  @keyframes cut {
+    0% { opacity: 0.2; transform: rotate(var(--tilt, -4deg)) translate(4px, -3px); }
+    100% { opacity: 1; transform: rotate(var(--tilt, -4deg)); }
+  }
+
+  @media (max-width: 860px) {
+    .hero { padding-block: 8.5rem 6rem; place-items: start center; }
+    .hero-inner { grid-template-columns: 1fr; justify-items: start; gap: 2.5rem; }
+    .intro { order: -1; }
+    .reel { width: min(260px, 70vw); justify-self: center; }
+    .d-dial, .d-plane, .d-book, .d-biplane { display: none; }
+    .d-peaks { bottom: 3%; width: 240px; opacity: 0.6; }
+    .constellation, .d-star { display: none; }
+    .scroll-cue { display: none; }
+  }
+</style>

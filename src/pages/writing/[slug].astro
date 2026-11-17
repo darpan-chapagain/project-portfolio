@@ -1,0 +1,42 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('writing', ({ data }) => !data.draft);
+  return posts.map((p) => ({ params: { slug: p.id }, props: { p } }));
+}
+
+const { p } = Astro.props;
+const { Content } = await render(p);
+const date = p.data.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+---
+<Base title={p.data.title} description={p.data.summary}>
+  <article class="wrap post">
+    <a class="back" href="/writing/">All writing</a>
+    <header>
+      <p class="meta">{date}</p>
+      <h1 class="display">{p.data.title}</h1>
+      {p.data.book && (
+        <p class="book hand">
+          {p.data.book.title} by {p.data.book.author}
+          {p.data.book.rating && <span aria-label={`Rated ${p.data.book.rating} out of 5`}>{' '}{'★'.repeat(p.data.book.rating)}{'☆'.repeat(5 - p.data.book.rating)}</span>}
+        </p>
+      )}
+    </header>
+    <div class="prose"><Content /></div>
+  </article>
+</Base>
+
+<style>
+  .post { padding-top: clamp(7.5rem, 12vw, 9rem); padding-bottom: 6rem; max-width: 780px; }
+  .back { font-size: var(--s-16); color: var(--paper-dim); }
+  header { margin: 2rem 0 2.5rem; }
+  .meta { margin: 0 0 0.5rem; color: var(--paper-dim); font-size: var(--s-16); }
+  h1 { font-size: clamp(3rem, 8vw, 5.5rem); }
+  .book { font-size: var(--s-24); color: var(--postit); margin: 1rem 0 0; }
+  .prose { max-width: var(--measure); font-size: var(--s-18); line-height: 1.7; }
+  .prose :global(h2) { font-family: var(--display); text-transform: uppercase; font-size: var(--s-36); margin: 2.4rem 0 0.8rem; }
+  .prose :global(p), .prose :global(li) { color: var(--chalk); }
+  .prose :global(blockquote) { margin: 1.5rem 0; padding-left: 1.2rem; border-left: 2px solid var(--postit); font-style: italic; }
+</style>

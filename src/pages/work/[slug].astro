@@ -1,0 +1,79 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  return projects.map((p, i) => ({
+    params: { slug: p.id },
+    props: { p, next: projects[(i + 1) % projects.length] },
+  }));
+}
+
+const { p, next } = Astro.props;
+const { Content } = await render(p);
+---
+<Base title={p.data.title} description={p.data.summary}>
+  <article class="wrap case">
+    <a class="back" href="/#work">Back to all work</a>
+    <header>
+      <p class="domain">{p.data.domain}</p>
+      <h1 class="display">{p.data.title}</h1>
+      {p.data.tagline && <p class="tagline">{p.data.tagline}</p>}
+      <dl class="meta">
+        <div><dt>Role</dt><dd>{p.data.role}</dd></div>
+        <div><dt>Stack</dt><dd>{p.data.stack.join(', ')}</dd></div>
+      </dl>
+    </header>
+
+    {p.data.results.length > 0 && (
+      <aside class="results torn" aria-label="Results">
+        <p class="hand">What changed</p>
+        <ul>{p.data.results.map((r) => <li>{r}</li>)}</ul>
+      </aside>
+    )}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <nav class="next" aria-label="Next project">
+      <a href={`/work/${next.id}/`}>
+        <span class="hand">Next frame</span>
+        <span class="display">{next.data.title}</span>
+      </a>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .case { padding-top: clamp(7.5rem, 12vw, 9rem); padding-bottom: 5rem; max-width: 900px; }
+  .back { font-size: var(--s-16); color: var(--paper-dim); }
+  header { margin: 2rem 0 2.5rem; }
+  .domain { margin: 0 0 0.6rem; color: var(--paper-dim); font-size: var(--s-16); }
+  h1 { font-size: clamp(3.2rem, 8vw, 6rem); }
+  .tagline { font-size: var(--s-24); margin: 0.8rem 0 0; font-style: italic; color: var(--chalk); }
+  .meta { margin: 1.8rem 0 0; display: grid; gap: 0.6rem; font-size: var(--s-16); }
+  .meta div { display: grid; grid-template-columns: 70px 1fr; gap: 1rem; }
+  .meta dt { color: var(--paper-dim); }
+  .meta dd { margin: 0; }
+
+  .results { padding: 1.8rem 2rem 1.5rem; margin: 0 0 3rem; transform: rotate(-0.6deg); }
+  .results .hand { margin: 0 0 0.4rem; font-size: var(--s-21); }
+  .results ul { margin: 0; padding-left: 1.2rem; }
+  .results li { font-size: var(--s-18); }
+  .results li + li { margin-top: 0.3rem; }
+
+  .prose { max-width: var(--measure); }
+  .prose :global(h2) { font-family: var(--display); text-transform: uppercase; font-size: var(--s-36); margin: 2.6rem 0 0.8rem; }
+  .prose :global(h2:first-child) { margin-top: 0; }
+  .prose :global(p), .prose :global(li) { color: var(--chalk); }
+  .prose :global(ul) { padding-left: 1.2rem; }
+  .prose :global(li + li) { margin-top: 0.35rem; }
+
+  .next { margin-top: 4.5rem; border-top: 1px solid rgb(214 207 191 / 0.18); padding-top: 1.5rem; }
+  .next a { text-decoration: none; display: grid; gap: 0.2rem; }
+  .next .hand { color: var(--paper-dim); font-size: var(--s-18); }
+  .next .display { font-size: clamp(2.2rem, 5vw, 3.4rem); }
+  .next a:hover .display { text-decoration: underline; text-decoration-thickness: 2px; }
+</style>

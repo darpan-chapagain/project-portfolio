@@ -1,0 +1,219 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import PlayRing from '../components/PlayRing.astro';
+import ContactSheet from '../components/ContactSheet.astro';
+import Doodle from '../components/Doodle.astro';
+import { person, roles, education, certifications, toolkit, principles } from '../data/site';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const industry = projects.filter((p) => p.data.kind === 'professional');
+const independent = projects.filter((p) => p.data.kind === 'independent');
+const titleOf = (id: string) => projects.find((p) => p.id === id)?.data.title ?? '';
+
+const posts = (await getCollection('writing', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+---
+<Base>
+  <Hero />
+  <PlayRing />
+
+  <section class="section principles wrap" aria-labelledby="how">
+    <div class="section-head">
+      <h2 id="how" class="display">How I build</h2>
+      <p>Four rules I picked up the hard way, each from a system that had to work the first time.</p>
+    </div>
+    <ul class="scraps">
+      {principles.map((pr, i) => (
+        <li class="scrap torn" style={`--r:${[-1.6, 1.2, 0.8, -1][i]}deg`}>
+          <h3 class="display">{pr.title}</h3>
+          <p>{pr.body}</p>
+          <a href={`/work/${pr.project}/`}>Learned on: {titleOf(pr.project)}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section id="experience" class="section wrap" aria-labelledby="exp">
+    <div class="section-head">
+      <h2 id="exp" class="display">Experience</h2>
+      <p>Four years in software: e-commerce SaaS for a US client, then banking and fintech in Kathmandu.</p>
+    </div>
+    <ol class="roles">
+      {roles.map((r) => (
+        <li class="role">
+          <p class="when">{r.start} to {r.end}</p>
+          <div>
+            <h3>{r.company}</h3>
+            <p class="titles">{r.titles.join(', ')}</p>
+            <p class="place">{r.place}</p>
+            <ul class="notes">{r.notes.map((n) => <li>{n}</li>)}</ul>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section id="work" class="section work" aria-labelledby="work-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="work-title" class="display">Selected work</h2>
+        <p>Pick a frame to read how it was built. Professional work is described at the architecture level, with no client code.</p>
+      </div>
+      <h3 class="strip-label">In industry</h3>
+      <ContactSheet items={industry} label="Industry projects" />
+      <h3 class="strip-label">On my own and at school</h3>
+      <ContactSheet items={independent} label="Independent and academic projects" />
+    </div>
+  </section>
+
+  <section class="section wrap kit" aria-labelledby="kit-title">
+    <div class="section-head">
+      <h2 id="kit-title" class="display">Toolkit</h2>
+      <p>What I reach for, from the backlog to the database.</p>
+    </div>
+    <ul class="notes-wall">
+      {toolkit.map((t, i) => (
+        <li class="postit hand" style={`--r:${[-3, 2, -1.5, 3, -2.5, 1.5][i % 6]}deg`}>
+          <strong>{t.heading}</strong>
+          <span>{t.items}</span>
+        </li>
+      ))}
+    </ul>
+
+    <div class="edu">
+      <div>
+        <h3 class="edu-h">Education</h3>
+        <ul class="edu-list">
+          {education.map((e) => (
+            <li>
+              <p class="degree">{e.degree}</p>
+              <p>{e.school}, {e.place}</p>
+              <p class="muted">{e.when}{e.detail && `. ${e.detail}`}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h3 class="edu-h">Certifications</h3>
+        <ul class="cert-list">{certifications.map((c) => <li>{c}</li>)}</ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap reading" aria-labelledby="reading-title">
+    <div class="section-head">
+      <h2 id="reading-title" class="display">Reading pile</h2>
+      <p>Book reviews and notes on building software.</p>
+    </div>
+    {posts.length > 0 ? (
+      <ul class="post-list">
+        {posts.map((p) => (
+          <li>
+            <a href={`/writing/${p.id}/`}>{p.data.title}</a>
+            <p class="muted">{fmt(p.data.date)}{p.data.book && `. Review of ${p.data.book.title} by ${p.data.book.author}`}</p>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="empty">
+        <Doodle name="book" class="empty-art" />
+        <p>The first review is still being written. In the meantime, <a href={person.linkedin}>follow me on LinkedIn</a> and you'll see it when it lands.</p>
+      </div>
+    )}
+  </section>
+
+  <section id="contact" class="section contact" aria-labelledby="contact-title">
+    <div class="wrap contact-inner">
+      <h2 id="contact-title" class="display start echo">Press start</h2>
+      <div class="contact-body">
+        <p class="lede">Hiring for technical product, program or AI roles? Want to talk fintech, or trade book recommendations? Email is fastest.</p>
+        <a class="email" href={`mailto:${person.email}`}>{person.email}</a>
+        <p class="links"><a href={person.linkedin}>LinkedIn</a> <a href={person.github}>GitHub</a></p>
+      </div>
+      <p class="postit hand contact-note" style="--r:4deg">Based in Dayton, Ohio. From Kathmandu. Looking at technical PM, software and AI roles in fintech.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* How I build */
+  .scraps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.25rem, 3vw, 2.25rem); }
+  .scrap { padding: 2.2rem 2rem 1.8rem; transform: rotate(var(--r)); }
+  .scrap h3 { font-size: clamp(2rem, 3.4vw, 2.75rem); margin-bottom: 0.7rem; }
+  .scrap p { margin: 0 0 1rem; font-size: var(--s-16); max-width: 46ch; }
+  .scrap a { font-size: var(--s-14); color: #4d483f; }
+
+  /* Experience */
+  .roles { list-style: none; margin: 0; padding: 0; }
+  .role {
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-block: 1.8rem;
+    border-top: 1px solid rgb(214 207 191 / 0.18);
+  }
+  .role:last-child { border-bottom: 1px solid rgb(214 207 191 / 0.18); }
+  .when { margin: 0.35rem 0 0; color: var(--paper-dim); font-size: var(--s-16); }
+  .role h3 { font-family: var(--display); text-transform: uppercase; font-size: clamp(2rem, 3.4vw, 2.6rem); line-height: 1; }
+  .titles { margin: 0.4rem 0 0; font-weight: 600; }
+  .place { margin: 0.1rem 0 0.7rem; color: var(--paper-dim); font-size: var(--s-16); }
+  .notes { margin: 0; padding-left: 1.1rem; max-width: var(--measure); font-size: var(--s-16); color: var(--chalk); }
+  .notes li + li { margin-top: 0.3rem; }
+
+  /* Work */
+  .work { background: linear-gradient(var(--ink), var(--ink-2) 18%, var(--ink-2) 82%, var(--ink)); }
+  .strip-label { font-family: var(--hand); font-size: var(--s-24); color: var(--paper-dim); margin: 2.5rem 0 0.8rem; }
+  .strip-label:first-of-type { margin-top: 0; }
+
+  /* Toolkit */
+  .notes-wall { list-style: none; margin: 0 0 4.5rem; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8rem 2.2rem; max-width: 960px; }
+  @media (max-width: 760px) { .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; } }
+  .postit {
+    background: var(--postit);
+    color: var(--postit-ink);
+    padding: 1.1rem 1.1rem 1.4rem;
+    transform: rotate(var(--r, -2deg));
+    box-shadow: 0 14px 18px -12px rgb(0 0 0 / 0.6);
+    font-size: var(--s-18);
+    line-height: 1.35;
+  }
+  .postit strong { display: block; font-weight: 700; font-size: var(--s-21); margin-bottom: 0.3rem; }
+  .edu { display: grid; grid-template-columns: 3fr 2fr; gap: 3rem; }
+  .edu-h { font-family: var(--display); text-transform: uppercase; font-size: var(--s-36); margin-bottom: 1rem; }
+  .edu-list, .cert-list { margin: 0; padding: 0; list-style: none; }
+  .edu-list li + li { margin-top: 1.4rem; }
+  .edu-list p { margin: 0; }
+  .degree { font-weight: 600; }
+  .cert-list li { padding-block: 0.55rem; border-top: 1px solid rgb(214 207 191 / 0.18); font-size: var(--s-16); }
+  .muted { color: var(--paper-dim); font-size: var(--s-16); }
+
+  /* Reading */
+  .empty { display: flex; gap: 1.5rem; align-items: center; max-width: 640px; color: var(--chalk); }
+  .empty :global(.empty-art) { width: 110px; flex: none; color: var(--chalk); }
+  .empty p { margin: 0; }
+  .post-list { list-style: none; margin: 0; padding: 0; }
+  .post-list li { padding-block: 1rem; border-top: 1px solid rgb(214 207 191 / 0.18); }
+  .post-list a { font-size: var(--s-24); }
+  .post-list p { margin: 0.2rem 0 0; }
+
+  /* Contact */
+  .contact { border-top: 1px solid rgb(214 207 191 / 0.14); }
+  .contact-inner { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1rem 3rem; align-items: end; position: relative; }
+  .start { font-size: clamp(5rem, 15vw, 12rem); grid-column: 1 / -1; }
+  .lede { margin: 0 0 1.2rem; max-width: 44ch; }
+  .email { font-size: clamp(var(--s-21), 3vw, var(--s-36)); word-break: break-all; }
+  .links { display: flex; gap: 1.5rem; margin: 1rem 0 0; color: var(--paper-dim); }
+  .contact-note { max-width: 260px; justify-self: end; margin: 0; }
+
+  @media (max-width: 760px) {
+    .scraps { grid-template-columns: 1fr; }
+    .role { grid-template-columns: 1fr; gap: 0.3rem; }
+    .edu { grid-template-columns: 1fr; gap: 2.5rem; }
+    .contact-inner { grid-template-columns: 1fr; }
+    .contact-note { justify-self: start; margin-top: 2rem; }
+  }
+</style>

@@ -1,0 +1,119 @@
+---
+import '../styles/global.css';
+import { person } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = person.description } = Astro.props;
+const fullTitle = title ? `${title} | ${person.name}` : `${person.name} | Technical product manager`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/#work', label: 'Work' },
+  { href: '/journey/', label: 'Journey' },
+  { href: '/writing/', label: 'Writing' },
+  { href: '/#contact', label: 'Contact' },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#15130f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="mark display" href="/" aria-label={`${person.name}, home`}>DC</a>
+      <nav aria-label="Main">
+        <ul>
+          {nav.map((n) => (
+            <li><a href={n.href} aria-current={path.startsWith(n.href) && n.href.length > 2 ? 'page' : undefined}>{n.label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="foot wrap">
+      <p class="copy">© {new Date().getFullYear()} {person.name}. Built with Astro, hosted on Cloudflare.</p>
+      <p>
+        <a href={person.github}>GitHub</a>
+        <a href={person.linkedin}>LinkedIn</a>
+        <a href={`mailto:${person.email}`}>Email</a>
+      </p>
+    </footer>
+
+    <script>
+      // Reveal big headings with the echo effect as they scroll into view.
+      const els = document.querySelectorAll('.echo, .echo-ring');
+      if (!('IntersectionObserver' in window)) {
+        els.forEach((el) => el.classList.add('is-in'));
+      } else {
+        const io = new IntersectionObserver(
+          (entries) => entries.forEach((e) => {
+            if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+          }),
+          { threshold: 0.35 }
+        );
+        els.forEach((el) => io.observe(el));
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .topbar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem var(--gutter);
+  }
+  .mark {
+    font-size: 2.1rem;
+    text-decoration: none;
+    border: 1px solid var(--chalk-2);
+    padding: 0.2rem 0.45rem 0;
+    line-height: 1;
+  }
+  nav ul { display: flex; gap: clamp(0.9rem, 3vw, 2rem); list-style: none; margin: 0; padding: 0; }
+  nav a { text-decoration: none; font-size: var(--s-16); color: var(--paper-dim); }
+  nav a:hover, nav a[aria-current='page'] { color: var(--paper); text-decoration: underline; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-block: 2.5rem 3rem;
+    position: relative;
+    color: var(--graphite);
+    font-size: var(--s-14);
+  }
+  .foot::before { content: ''; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid rgb(214 207 191 / 0.18); }
+  .foot p { margin: 0; display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  .foot a { color: var(--paper-dim); }
+  @media (max-width: 520px) {
+    nav ul { gap: 0.85rem; }
+    nav a { font-size: var(--s-14); }
+    .mark { font-size: 1.7rem; }
+  }
+</style>

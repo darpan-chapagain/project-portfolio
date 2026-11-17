@@ -1,0 +1,105 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Doodle from '../components/Doodle.astro';
+import { levels, nextLevel } from '../data/site';
+
+const projects = await getCollection('projects');
+const title = (id: string) => projects.find((p) => p.id === id)?.data.title ?? id;
+---
+<Base title="My journey so far" description="From a classroom in Kathmandu to Dayton, Ohio, one level at a time.">
+  <section class="wrap head">
+    <h1 class="display echo">My journey so far</h1>
+    <p class="intro">Read it like a game, one level at a time. A playable version is in the works. Until then, this is the storyboard.</p>
+  </section>
+
+  <ol class="wrap board">
+    {levels.map((l, i) => (
+      <li class="panel" style={`--r:${i % 2 ? 0.6 : -0.6}deg`}>
+        <div class="shot">
+          <span class="lvl display">Level {l.n}</span>
+          <Doodle name={l.art} class="shot-art" />
+          <span class="hand where">{l.place}</span>
+        </div>
+        <div class="notes">
+          <p class="when">{l.when}</p>
+          <h2 class="display">{l.title}</h2>
+          {l.story.map((s) => <p>{s}</p>)}
+          {l.boss && <p class="boss"><span class="hand">Boss fight:</span> {l.boss}</p>}
+          {l.unlocked && (
+            <p class="unlocked"><span class="hand">Unlocked:</span> {l.unlocked.join(', ')}</p>
+          )}
+          {l.projects && (
+            <ul class="links">
+              {l.projects.map((id) => <li><a href={`/work/${id}/`}>{title(id)}</a></li>)}
+            </ul>
+          )}
+        </div>
+      </li>
+    ))}
+    <li class="panel next">
+      <div class="shot loading">
+        <span class="lvl display">Level {levels.length + 1}</span>
+        <span class="display dots">Loading<span class="cursor">_</span></span>
+      </div>
+      <div class="notes">
+        <h2 class="display">{nextLevel.title}</h2>
+        <p>{nextLevel.story}</p>
+        <p><a href="/#contact">Want to be in this level? Get in touch.</a></p>
+      </div>
+    </li>
+  </ol>
+</Base>
+
+<style>
+  .head { padding-top: clamp(8rem, 14vw, 10rem); padding-bottom: 3rem; }
+  .kicker { margin: 0 0 0.5rem; color: var(--paper-dim); font-size: var(--s-21); }
+  h1 { font-size: clamp(4.5rem, 12vw, 9rem); }
+  .intro { max-width: 52ch; color: var(--chalk); margin: 1.2rem 0 0; }
+
+  .board { list-style: none; padding-bottom: 6rem; margin-top: 0; display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }
+  .panel {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: start;
+  }
+  /* The drawn frame of a storyboard panel. */
+  .shot {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border: 2px solid var(--paper);
+    background: var(--ink-2);
+    color: var(--chalk);
+    display: grid;
+    place-items: center;
+    transform: rotate(var(--r));
+  }
+  .shot::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px dashed rgb(214 207 191 / 0.25);
+    pointer-events: none;
+  }
+  .shot :global(.shot-art) { width: 46%; max-height: 70%; }
+  .lvl { position: absolute; top: 0.6rem; left: 0.9rem; font-size: var(--s-24); color: var(--paper); }
+  .where { position: absolute; bottom: 0.5rem; right: 0.9rem; font-size: var(--s-18); color: var(--paper-dim); }
+
+  .when { margin: 0 0 0.2rem; color: var(--paper-dim); font-size: var(--s-16); }
+  .notes h2 { font-size: clamp(2.4rem, 5vw, 3.6rem); margin-bottom: 0.7rem; }
+  .notes p { margin: 0 0 0.8rem; max-width: 56ch; }
+  .notes .hand { font-size: 1.1em; color: var(--postit); margin-right: 0.25rem; }
+  .boss, .unlocked { font-size: var(--s-16); color: var(--chalk); }
+  .links { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: var(--s-16); }
+  .links li + li { margin-top: 0.25rem; }
+
+  .loading { background: transparent; border-style: dashed; }
+  .dots { font-size: clamp(2.5rem, 6vw, 4rem); color: var(--paper); }
+  .cursor { animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  @media (max-width: 760px) {
+    .panel { grid-template-columns: 1fr; }
+  }
+</style>
