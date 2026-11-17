@@ -66,9 +66,11 @@ const [neFirst, neLast] = person.nepaliFull;
             <span class="lab">Origin:</span> Nepali <span class="ne-word" lang="ne">{person.nepali}</span>, a mirror.
             <span class="more hand">word history</span>
           </summary>
+          <div class="history-wrap">
           <div class="history-body">
             <p>From Sanskrit <em>darpaṇa</em>, literally &ldquo;the thing that makes you proud&rdquo;, which is fair, since nobody walks past one without a look. I've taken it as a brief: do work I'd be proud to see reflected back, and make the big calls in my career and life the same way.</p>
-            <p><span class="lab">See also:</span> <em>Lahana Le Jurayo Ki</em>, the title song of <em>Darpan Chhaya</em> (<span class="ne-word" lang="ne">दर्पण छायाँ</span>, 2001), written by Tulsi Ghimire, composed by Ranjit Gazmer and sung by Sadhana Sargam. The film became the biggest Nepali movie of its time, and the song's refrain compares a whole life to a reflection in a mirror. A reflection is only as clear as the glass. Most of my work is cleaning the glass: clean data, clear specs, no surprises.</p>
+            <p><span class="lab">See also:</span> <em>Lahana Le Jurayo Ki</em>, the title song of <em>Darpan Chhaya</em> (<span class="ne-word" lang="ne">दर्पण छायाँ</span>, 2001), written by Tulsi Ghimire, composed by Ranjit Gazmer and sung by Sadhana Sargam, with a male version by Indrajeet Mijar. The film became the biggest Nepali movie of its time, and the song's refrain compares a whole life to a reflection in a mirror. A reflection is only as clear as the glass. Most of my work is cleaning the glass: clean data, clear specs, no surprises.</p>
+          </div>
           </div>
         </details>
       </div>
@@ -119,7 +121,46 @@ const [neFirst, neLast] = person.nepaliFull;
   name?.addEventListener('click', () => { window.clearInterval(flipTimer); flip(); auto(); });
   window.setTimeout(() => { if (!reduce.matches) { flip(); auto(); } }, 2600);
 
-  document.querySelector('.hero .history')?.addEventListener('toggle', () => window.dispatchEvent(new Event('resize')));
+  // Word history: unfold and fold smoothly every time, not just the first.
+  const history = document.querySelector<HTMLDetailsElement>('.hero .history');
+  const wrap = history?.querySelector<HTMLElement>('.history-wrap');
+  const body = history?.querySelector<HTMLElement>('.history-body');
+  let running: Animation[] = [];
+  history?.querySelector('summary')?.addEventListener('click', (e) => {
+    if (reduce.matches || !wrap || !body || !wrap.animate) return;
+    e.preventDefault();
+    const opening = !history.open || history.classList.contains('closing');
+    // A closed details still reports its content's size in some browsers, so start from 0 then.
+    const from = history.open ? wrap.getBoundingClientRect().height : 0;
+    running.forEach((a) => a.cancel());
+    if (opening) {
+      history.classList.remove('closing');
+      // Pin the height first so the full text never flashes before the animation starts.
+      wrap.style.height = `${from}px`;
+      history.open = true;
+      const to = wrap.scrollHeight;
+      running = [
+        wrap.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 560, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' }),
+        body.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 560, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' }),
+      ];
+      const release = () => { wrap.style.height = ''; };
+      running[0].onfinish = release;
+      running[0].oncancel = release;
+    } else {
+      history.classList.add('closing');
+      running = [
+        wrap.animate([{ height: `${from}px` }, { height: '0px' }], { duration: 420, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }),
+        body.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px)' }], { duration: 300, easing: 'ease-in', fill: 'forwards' }),
+      ];
+      running[0].onfinish = () => {
+        history.open = false;
+        history.classList.remove('closing');
+        running.forEach((a) => a.cancel());
+      };
+    }
+  });
+  // Content below moved, so parallax positions need measuring again.
+  history?.addEventListener('toggle', () => window.dispatchEvent(new Event('resize')));
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { stop(); window.clearInterval(flipTimer); }
@@ -285,7 +326,7 @@ const [neFirst, neLast] = person.nepaliFull;
     line-height: 1.2;
   }
   .more::after { content: ' +'; }
-  .history[open] .more::after { content: ' \2212'; }
+  .history[open]:not(.closing) .more::after { content: ' \2212'; }
   .history summary:hover .more { border-bottom-color: var(--paper); }
   .history-body {
     margin-top: 0.7rem;
@@ -297,8 +338,7 @@ const [neFirst, neLast] = person.nepaliFull;
   }
   .history-body p { margin: 0 0 0.7rem; }
   .history-body p:last-child { margin-bottom: 0; }
-  .history[open] .history-body { animation: unfold 520ms var(--ease) both; }
-  @keyframes unfold { from { opacity: 0; transform: translateY(-6px); clip-path: inset(0 0 100% 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+  .history-wrap { overflow: hidden; }
 
   .scroll-cue {
     position: absolute;
