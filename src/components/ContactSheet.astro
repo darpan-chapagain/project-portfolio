@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import Doodle from './Doodle.astro';
 interface Props { items: CollectionEntry<'projects'>[]; label: string }
 const { items, label } = Astro.props;
 ---
@@ -7,6 +8,7 @@ const { items, label } = Astro.props;
   {items.map((p) => (
     <li class="cell">
       <a class="print" href={`/work/${p.id}/`}>
+        <Doodle name={p.data.art} class="print-art" />
         <span class="domain">{p.data.domain}</span>
         <span class="title display">{p.data.short}</span>
         {p.data.results[0] && <span class="result">{p.data.results[0]}</span>}
@@ -25,7 +27,7 @@ const { items, label } = Astro.props;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 0;
   }
   /* Each cell is a piece of film: dark base, sprocket holes top and bottom. */
@@ -61,8 +63,10 @@ const { items, label } = Astro.props;
     text-decoration: none;
     transition: transform 240ms var(--ease);
   }
-  .domain { font-size: var(--s-14); color: #5b564c; }
-  .title { font-size: clamp(2.2rem, 3vw, 2.75rem); line-height: 0.92; align-self: start; }
+  .domain { font-size: var(--s-14); color: #5b564c; padding-right: 56px; }
+  .print :global(.print-art) { position: absolute; top: 0.9rem; right: 0.9rem; width: 44px; color: var(--card-ink); opacity: 0.85; transition: transform 400ms var(--ease); }
+  .print:hover :global(.print-art) { transform: rotate(-8deg) scale(1.1); }
+  .title { font-size: clamp(2.2rem, 3vw, 2.75rem); line-height: 0.92; align-self: start; padding-right: 44px; }
   .result { font-style: italic; font-size: var(--s-16); line-height: 1.4; }
   .role { font-size: var(--s-14); color: #5b564c; border-top: 1px solid rgb(var(--card-ink-rgb) / 0.18); padding-top: 0.5rem; }
 

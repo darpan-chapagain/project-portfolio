@@ -16,6 +16,10 @@ stack:
   - "SQL"
   - "Oracle"
   - "REST APIs"
+company: "AMNIL Technologies"
+art: "payslip"
+group: "fintech"
+featured: true
 ---
 
 ## Problem

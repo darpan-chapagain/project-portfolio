@@ -36,6 +36,23 @@ const shortNames = {
   'high-performance-route-optimization': 'Route optimization on HPC',
 };
 
+// Extra facts the README doesn't hold: where it was built, its doodle, its filter group,
+// and whether it is one of the six on the home page.
+const meta = {
+  'digital-account-opening-and-compliance-automation-system': { company: 'AMNIL Technologies', art: 'idcard', group: 'fintech', featured: true },
+  'automated-banking-payroll-processing-system': { company: 'AMNIL Technologies', art: 'payslip', group: 'fintech', featured: true },
+  'enterprise-access-control-and-role-management-platform': { company: 'AMNIL Technologies', art: 'key', group: 'fintech' },
+  'multi-channel-banking-notification-system': { company: 'AMNIL Technologies', art: 'alerts', group: 'fintech', featured: true },
+  'banking-microsite-and-content-management-platform': { company: 'AMNIL Technologies', client: 'Nabil Bank', art: 'browser', group: 'fintech' },
+  'large-scale-banking-data-migration-and-validation': { company: 'F1Soft International', art: 'database', group: 'fintech', featured: true },
+  'e-commerce-marketplace-integration-and-synchronization-platform': { company: 'Proshore (Digital Product Labs)', art: 'sync', group: 'platforms' },
+  'learning-management-and-job-matching-platform': { art: 'cap', group: 'platforms' },
+  'fittracker': { company: 'Personal project', art: 'dumbbell', group: 'ai', featured: true },
+  'himal-ash': { company: 'Personal project', art: 'sword', group: 'games', featured: true, repo: 'https://github.com/darpan-chapagain/himal-ash' },
+  'real-time-pose-analysis-and-exercise-quality-tracking-system': { art: 'pose', group: 'ai' },
+  'high-performance-route-optimization': { art: 'route', group: 'games' },
+};
+
 let kind = null;
 let order = 0;
 const projects = [];
@@ -88,6 +105,7 @@ for (const block of readme.split(/\n(?=## |### )/)) {
     `summary: ${yamlStr(summary)}`,
     `results:\n${results.map((r) => `  - ${yamlStr(r)}`).join('\n') || '  []'}`,
     `stack:\n${stack.map((s) => `  - ${yamlStr(s)}`).join('\n')}`,
+    ...Object.entries(meta[slug] ?? {}).map(([k, v]) => `${k}: ${typeof v === 'string' ? yamlStr(v) : v}`),
     '---',
   ].filter(Boolean).join('\n');
 

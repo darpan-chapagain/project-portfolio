@@ -14,6 +14,10 @@ stack:
   - "PHP"
   - "CMS Architecture"
   - "SQL"
+company: "AMNIL Technologies"
+client: "Nabil Bank"
+art: "browser"
+group: "fintech"
 ---
 
 ## Problem

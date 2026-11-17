@@ -6,11 +6,11 @@ import PlayRing from '../components/PlayRing.astro';
 import ContactSheet from '../components/ContactSheet.astro';
 import Doodle from '../components/Doodle.astro';
 import Sky from '../components/Sky.astro';
-import { person, roles, education, certifications, toolkit, principles } from '../data/site';
+import { person, roles, education, certifications, toolkit, principles, clients, recognition } from '../data/site';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
-const industry = projects.filter((p) => p.data.kind === 'professional');
-const independent = projects.filter((p) => p.data.kind === 'independent');
+const featured = projects.filter((p) => p.data.featured);
+const shortOf = (id: string) => projects.find((p) => p.id === id)?.data.short ?? '';
 const titleOf = (id: string) => projects.find((p) => p.id === id)?.data.title ?? '';
 
 const posts = (await getCollection('writing', ({ data }) => !data.draft))
@@ -51,17 +51,29 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     <div class="wrap">
     <div class="section-head" data-speed="-0.04">
       <h2 id="exp" class="display">Experience</h2>
-      <p>Four years in software: e-commerce SaaS for a US client, then banking and fintech in Kathmandu.</p>
+      <p>Four years in software. E-commerce SaaS for a US client first, then banking products for 16+ financial institutions in Kathmandu.</p>
     </div>
-    <ol class="roles">
-      {roles.map((r) => (
-        <li class="role">
-          <p class="when">{r.start} to {r.end}</p>
-          <div>
-            <h3>{r.company}</h3>
-            <p class="titles">{r.titles.join(', ')}</p>
+    <ol class="roles" data-reveal>
+      {roles.map((r, i) => (
+        <li class="role" style={`--i:${i}`}>
+          <div class="when-col">
+            <p class="when">{r.start} to {r.end}</p>
             <p class="place">{r.place}</p>
-            <ul class="notes">{r.notes.map((n) => <li>{n}</li>)}</ul>
+          </div>
+          <div class="role-main">
+            <h3>{r.company}</h3>
+            <p class="titles">{r.titles.join(' and ')}</p>
+            {r.steps && (
+              <ol class="steps" aria-label="Roles over time">
+                {r.steps.map((st) => <li><span class="dot"></span><span class="st-title">{st.title}</span><span class="st-when">{st.when}</span></li>)}
+              </ol>
+            )}
+            <p class="summary">{r.summary}</p>
+            <ul class="wins">{r.highlights.map((h) => <li set:html={h} />)}</ul>
+            <p class="proj">
+              <span class="hand">Projects:</span>
+              {r.projects.map((id, k) => <>{k > 0 && ', '}<a href={`/work/${id}/`}>{shortOf(id)}</a></>)}
+            </p>
           </div>
         </li>
       ))}
@@ -69,16 +81,28 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     </div>
   </section>
 
+  <section class="clients" aria-label="Banks and financial institutions I've shipped for">
+    <p class="clients-label hand wrap">Shipped for</p>
+    <div class="marquee">
+      <ul class="track">
+        {[0, 1].map((copy) => clients.map((c) => (
+          <li aria-hidden={copy === 1 ? 'true' : undefined}><span class="display">{c}</span><Doodle name="star" class="sep" /></li>
+        )))}
+      </ul>
+    </div>
+  </section>
+
   <section id="work" class="section work" aria-labelledby="work-title">
     <div class="wrap">
       <div class="section-head" data-speed="-0.04">
         <h2 id="work-title" class="display">Selected work</h2>
-        <p>Pick a frame to read how it was built. Professional work is described at the architecture level, with no client code.</p>
+        <p>Six of the twelve. Pick a frame to read how it was built. Client work is described at the architecture level, with no client code.</p>
       </div>
-      <h3 class="strip-label">In industry</h3>
-      <ContactSheet items={industry} label="Industry projects" />
-      <h3 class="strip-label">On my own and at school</h3>
-      <ContactSheet items={independent} label="Independent and academic projects" />
+      <ContactSheet items={featured} label="Selected projects" />
+      <a class="all-link" href="/work/">
+        <span class="hand">See all {projects.length} projects</span>
+        <Doodle name="arrow" class="all-arrow" />
+      </a>
     </div>
   </section>
 
@@ -89,7 +113,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     </div>
     <ul class="notes-wall" data-reveal>
       {toolkit.map((t, i) => (
-        <li class="postit hand" style={`--r:${[-3, 2, -1.5, 3, -2.5, 1.5][i % 6]}deg;--i:${i}`} data-speed={[0.03, -0.02, 0.05, -0.04, 0.02, -0.03][i % 6]}>
+        <li class="postit hand" style={`--r:${[-3, 2, -1.5, 3, -2.5, 1.5, 2.5, -2][i % 8]}deg;--i:${i}`} data-speed={[0.03, -0.02, 0.05, -0.04, 0.02, -0.03, 0.04, -0.02][i % 8]}>
           <strong>{t.heading}</strong>
           <span>{t.items}</span>
         </li>
@@ -114,6 +138,28 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
         <ul class="cert-list">{certifications.map((c) => <li>{c}</li>)}</ul>
       </div>
     </div>
+  </section>
+
+  <section class="section wrap honours" aria-labelledby="honours-title">
+    <div class="section-head" data-speed="-0.04">
+      <h2 id="honours-title" class="display">Along the way</h2>
+      <p>An award, a talk, some mentoring and a bit of community work.</p>
+    </div>
+    <ul class="stubs" data-reveal>
+      {recognition.map((r, i) => (
+        <li class="stub-wrap paper-shadow" style={`--i:${i};--r:${[-1.2, 0.9, 1.1, -0.8][i]}deg`}>
+          <div class="stub">
+            <span class="year display">{r.year}</span>
+            <span class="stub-body">
+              <span class="stub-title">{r.title}</span>
+              <span class="stub-where">{r.where}</span>
+              <span class="stub-note">{r.note}</span>
+              {r.link && <a class="stub-link hand" href={r.link}>see the talk</a>}
+            </span>
+          </div>
+        </li>
+      ))}
+    </ul>
   </section>
 
   <section class="section reading has-sky" aria-labelledby="reading-title">
@@ -209,27 +255,89 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   /* Experience */
   .roles { list-style: none; margin: 0; padding: 0; }
   .role {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
     gap: 1.5rem;
-    padding-block: 1.8rem;
-    border-top: 1px solid rgb(var(--chalk-rgb) / 0.18);
+    padding-block: 2.2rem;
   }
-  .role:last-child { border-bottom: 1px solid rgb(var(--chalk-rgb) / 0.18); }
-  .when { margin: 0.35rem 0 0; color: var(--paper-dim); font-size: var(--s-16); }
-  .role h3 { font-family: var(--display); text-transform: uppercase; font-size: clamp(2rem, 3.4vw, 2.6rem); line-height: 1; }
-  .titles { margin: 0.4rem 0 0; font-weight: 600; }
-  .place { margin: 0.1rem 0 0.7rem; color: var(--paper-dim); font-size: var(--s-16); }
-  .notes { margin: 0; padding-left: 1.1rem; max-width: var(--measure); font-size: var(--s-16); color: var(--chalk); }
-  .notes li + li { margin-top: 0.3rem; }
+  /* The rule above each role draws itself in as it arrives. */
+  .role::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    border-top: 1px solid rgb(var(--chalk-rgb) / 0.2);
+    transform-origin: left;
+  }
+  .role:last-child { border-bottom: 1px solid rgb(var(--chalk-rgb) / 0.2); }
+  .js .roles:not(.is-in) .role::before { transform: scaleX(0); }
+  .js .roles:not(.is-in) .role > * { opacity: 0; }
+  .roles.is-in .role::before { animation: rule-in 900ms var(--ease) backwards; animation-delay: calc(var(--i) * 160ms); }
+  .roles.is-in .role > * { animation: rise 800ms var(--ease) backwards; animation-delay: calc(var(--i) * 160ms + 150ms); }
+  @keyframes rule-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  .when { margin: 0.45rem 0 0; color: var(--paper); font-size: var(--s-16); }
+  .place { margin: 0.1rem 0 0; color: var(--paper-dim); font-size: var(--s-14); }
+  .role h3 { font-family: var(--display); text-transform: uppercase; font-size: clamp(2.2rem, 3.6vw, 2.9rem); line-height: 1; }
+  .titles { margin: 0.35rem 0 0; font-weight: 600; }
+  .summary { margin: 0.8rem 0 0.7rem; max-width: var(--measure); color: var(--chalk); }
+  .wins { margin: 0; padding-left: 1.1rem; max-width: var(--measure); font-size: var(--s-16); color: var(--chalk); }
+  .wins li + li { margin-top: 0.35rem; }
+  .wins :global(strong) { color: var(--paper); font-weight: 650; }
+  .proj { margin: 0.9rem 0 0; font-size: var(--s-14); color: var(--paper-dim); }
+  .proj .hand { font-size: 1.15em; margin-right: 0.3rem; color: var(--paper); }
+  .proj a { color: var(--paper-dim); }
+  .proj a:hover { color: var(--paper); }
+
+  /* Role changes inside one company, as a small track. */
+  .steps { list-style: none; margin: 0.9rem 0 0.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 0; position: relative; }
+  .steps li { position: relative; display: grid; gap: 0.05rem; padding: 0 1.6rem 0 1.1rem; font-size: var(--s-14); }
+  .steps li::after { content: ''; position: absolute; left: 0.3rem; right: 0.4rem; top: 0.62rem; border-top: 1px dashed rgb(var(--chalk-rgb) / 0.35); z-index: -1; }
+  .steps li:last-child::after { display: none; }
+  .steps .dot { position: absolute; left: 0; top: 0.36rem; width: 0.55rem; height: 0.55rem; border-radius: 50%; border: 1.5px solid var(--paper); background: var(--ink); }
+  .steps li:last-child .dot { background: var(--paper); }
+  .st-title { color: var(--paper); }
+  .st-when { color: var(--paper-dim); font-size: 0.92em; }
+
+  /* Banks marquee */
+  .clients { padding: 1.2rem 0 2.2rem; overflow: hidden; }
+  .clients-label { margin: 0 auto 0.6rem; font-size: var(--s-21); color: var(--paper-dim); }
+  .marquee {
+    overflow: hidden;
+    -webkit-mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .track { list-style: none; margin: 0; padding: 0; display: flex; width: max-content; animation: drift-x 45s linear infinite; }
+  .marquee:hover .track { animation-play-state: paused; }
+  .track li { display: flex; align-items: center; gap: 1.6rem; padding-right: 1.6rem; }
+  .track .display { font-size: clamp(2.2rem, 4.4vw, 3.6rem); color: var(--paper); opacity: 0.85; white-space: nowrap; }
+  .track :global(.sep) { width: 14px; color: var(--chalk-2); }
+  @keyframes drift-x { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .track { animation: none; flex-wrap: wrap; width: auto; padding-inline: var(--gutter); }
+    .track li[aria-hidden='true'] { display: none; }
+  }
 
   /* Work */
   .work { background: linear-gradient(var(--ink), var(--ink-2) 18%, var(--ink-2) 82%, var(--ink)); }
-  .strip-label { font-family: var(--hand); font-size: var(--s-24); color: var(--paper-dim); margin: 2.5rem 0 0.8rem; }
-  .strip-label:first-of-type { margin-top: 0; }
+  .all-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 2rem;
+    font-size: var(--s-24);
+    text-decoration: none;
+    color: var(--paper);
+  }
+  .all-link .hand { border-bottom: 1px dashed var(--chalk-2); line-height: 1.25; }
+  .all-link :global(.all-arrow) { width: 64px; transition: transform 400ms var(--ease); }
+  .all-link:hover :global(.all-arrow) { transform: translateX(8px) rotate(-4deg); }
+  .all-link:hover .hand { border-bottom-color: var(--paper); }
 
   /* Toolkit */
-  .notes-wall { list-style: none; margin: 0 0 4.5rem; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8rem 2.2rem; max-width: 960px; }
+  .notes-wall { list-style: none; margin: 0 0 4.5rem; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.8rem 2rem; }
+  @media (max-width: 1000px) { .notes-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 760px) { .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; } }
   .postit {
     position: relative;
@@ -273,6 +381,36 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .cert-list li { padding-block: 0.55rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); font-size: var(--s-16); }
   .muted { color: var(--paper-dim); font-size: var(--s-16); }
 
+  /* Along the way: ticket stubs */
+  .stubs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.8rem 2.2rem; }
+  .stub-wrap { transform: rotate(var(--r)); transition: transform 350ms var(--ease); }
+  .stub-wrap:hover { transform: rotate(calc(var(--r) * -0.5)) translateY(-4px); }
+  .js .stubs:not(.is-in) .stub-wrap { opacity: 0; }
+  .stubs.is-in .stub-wrap { animation: deal 800ms cubic-bezier(0.25, 1.3, 0.5, 1) backwards; animation-delay: calc(var(--i) * 130ms); }
+  @keyframes deal { from { opacity: 0; transform: translateX(-40px) rotate(calc(var(--r) - 6deg)); } to { opacity: 1; transform: rotate(var(--r)); } }
+  .stub {
+    display: grid;
+    grid-template-columns: 6.2rem 1fr;
+    background: var(--card);
+    color: var(--card-ink);
+    min-height: 9rem;
+    -webkit-mask: radial-gradient(circle at 0 50%, transparent 11px, #000 11.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 11px, #000 11.5px) right / 51% 100% no-repeat;
+    mask: radial-gradient(circle at 0 50%, transparent 11px, #000 11.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 11px, #000 11.5px) right / 51% 100% no-repeat;
+  }
+  .year {
+    display: grid;
+    place-items: center;
+    font-size: 2.6rem;
+    border-right: 2px dashed rgb(var(--card-ink-rgb) / 0.25);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .stub-body { display: grid; align-content: center; gap: 0.15rem; padding: 1.1rem 1.6rem 1.1rem 1.3rem; }
+  .stub-title { font-family: var(--display); text-transform: uppercase; font-size: 1.9rem; line-height: 1; }
+  .stub-where { font-size: var(--s-14); color: rgb(var(--card-ink-rgb) / 0.7); }
+  .stub-note { font-size: var(--s-16); line-height: 1.45; margin-top: 0.35rem; }
+  .stub-link { justify-self: start; margin-top: 0.3rem; font-size: var(--s-18); color: var(--card-ink); }
+
   /* Reading */
   .empty { display: flex; gap: 1.5rem; align-items: center; max-width: 640px; color: var(--chalk); }
   .empty :global(.empty-art) { width: 110px; flex: none; color: var(--chalk); }
@@ -294,6 +432,8 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   @media (max-width: 760px) {
     .scraps { grid-template-columns: 1fr; }
     .role { grid-template-columns: 1fr; gap: 0.3rem; }
+    .stubs { grid-template-columns: 1fr; }
+    .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .edu { grid-template-columns: 1fr; gap: 2.5rem; }
     .contact-inner { grid-template-columns: 1fr; }
     .contact-note { justify-self: start; margin-top: 2rem; }

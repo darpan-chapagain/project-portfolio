@@ -12,6 +12,8 @@ stack:
   - "Python"
   - "MediaPipe"
   - "OpenCV"
+art: "pose"
+group: "ai"
 ---
 
 ## Problem

@@ -13,6 +13,8 @@ stack:
   - "SLURM"
   - "AWS"
   - "HPC"
+art: "route"
+group: "games"
 ---
 
 ## Problem

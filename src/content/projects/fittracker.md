@@ -21,6 +21,10 @@ stack:
   - "WorkManager"
   - "Play Billing"
   - "MVVM/Repository Pattern"
+company: "Personal project"
+art: "dumbbell"
+group: "ai"
+featured: true
 ---
 
 ## Problem

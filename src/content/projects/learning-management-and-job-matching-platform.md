@@ -14,6 +14,8 @@ stack:
   - ".NET"
   - "REST APIs"
   - "PostgreSQL"
+art: "cap"
+group: "platforms"
 ---
 
 ## Problem

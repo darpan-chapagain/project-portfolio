@@ -16,6 +16,10 @@ stack:
   - "SQL"
   - "REST APIs"
   - "Core Banking Systems"
+company: "AMNIL Technologies"
+art: "idcard"
+group: "fintech"
+featured: true
 ---
 
 ## Problem

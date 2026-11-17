@@ -16,7 +16,7 @@ export const person = {
   nepaliFull: ['दर्पण', 'चापागाईं'],
   hometown: 'Kathmandu, Nepal',
   description:
-    'Technical product manager with four years in software and fintech, now an M.S. Computer Science student at Wright State University.',
+    'Technical product manager with four years in software, most recently banking products for 16+ financial institutions. Now an M.S. Computer Science student at Wright State University.',
 };
 
 export type Role = {
@@ -25,7 +25,12 @@ export type Role = {
   company: string;
   place: string;
   titles: string[];
-  notes: string[];
+  summary: string;
+  /** Short wins. <strong> marks the number that matters. */
+  highlights: string[];
+  /** Role changes inside one company, oldest first. */
+  steps?: { title: string; when: string }[];
+  projects: string[];
 };
 
 export const roles: Role[] = [
@@ -35,7 +40,22 @@ export const roles: Role[] = [
     company: 'AMNIL Technologies',
     place: 'Kathmandu, hybrid',
     titles: ['Technical Project Manager'],
-    notes: ['Technical project management for banking and fintech software.'],
+    summary:
+      'Led delivery of 5+ enterprise banking products from backlog to production, with backend, frontend, QA, design and DevOps on the team.',
+    highlights: [
+      'Compliance automation for CDD and ECDD cut customer onboarding from <strong>3 days to under 1 hour</strong> and manual document errors by <strong>60%</strong>.',
+      'Payroll automation now runs securely for <strong>10,000+ employees</strong> a month, with <strong>40%</strong> less HR effort.',
+      'SMS and Viber notifications with provider failover reach a <strong>99.5%+</strong> delivery rate.',
+      'Nabil Bank’s microsite got <strong>70%</strong> faster and kept visitors <strong>2.3x</strong> longer.',
+      'Shipped 3 small and 2 large projects in two quarters, and ran the PM internship program.',
+    ],
+    projects: [
+      'digital-account-opening-and-compliance-automation-system',
+      'automated-banking-payroll-processing-system',
+      'enterprise-access-control-and-role-management-platform',
+      'multi-channel-banking-notification-system',
+      'banking-microsite-and-content-management-platform',
+    ],
   },
   {
     start: 'Aug 2023',
@@ -43,20 +63,42 @@ export const roles: Role[] = [
     company: 'F1Soft International',
     place: 'Kathmandu, onsite',
     titles: ['Project Manager'],
-    notes: ['Project management for fintech products.'],
+    summary:
+      'Ran mobile and internet banking delivery for 16 financial institutions at once, each with its own compliance rules, branding and core banking system.',
+    highlights: [
+      'The apps served <strong>100,000+</strong> users across banks including NIMB, Nepal Bank, ADBL and Everest Bank.',
+      'Brought in Large Scale Scrum across departments and sped up delivery by <strong>20%</strong>.',
+      'Migrated <strong>100,000+</strong> legacy customer records with zero data loss and zero rollbacks.',
+      'Launched features that brought in <strong>$11,000</strong> of new revenue, and lifted client satisfaction by <strong>60%</strong>.',
+    ],
+    projects: ['large-scale-banking-data-migration-and-validation'],
   },
   {
     start: 'Jan 2021',
     end: 'Jul 2023',
     company: 'Proshore (Digital Product Labs)',
     place: 'Remote, for a US client',
-    titles: ['Tech Support Team Lead', 'Scrum Master', 'Customer Technical Support & PHP Developer'],
-    notes: [
-      'Started in support and PHP development. Promoted to team lead after one year.',
-      'Key Contributor Award, 2022, for leading the response to a company-wide service outage.',
-      'Gave a company knowledge-sharing talk on Hotjar and analytics-driven UX, 2023.',
+    titles: ['Tech Support Team Lead', 'Scrum Master'],
+    summary:
+      'SaaS that keeps Shopify, Etsy, WooCommerce, Amazon and eBay stores in sync. Started out fixing bugs in PHP, ended up leading the support team.',
+    steps: [
+      { title: 'Support and PHP developer', when: 'Jan 2021 to Feb 2022' },
+      { title: 'Scrum Master', when: 'Jun 2021 to Feb 2023' },
+      { title: 'Team lead', when: 'Jan 2022 to Jul 2023' },
     ],
+    highlights: [
+      'Cut average customer response time from <strong>12 hours to 45 minutes</strong>.',
+      'Fed client feedback straight into the backlog and took the app store rating from <strong>4.5 to 4.8</strong>.',
+      'Raised customer satisfaction from <strong>75% to 90%</strong> in a year, leading a team of 6.',
+      'Key Contributor Award for <strong>14 straight days</strong> on a company-wide outage.',
+    ],
+    projects: ['e-commerce-marketplace-integration-and-synchronization-platform'],
   },
+];
+
+// Banks and financial institutions I've shipped for. Text only, no logos.
+export const clients = [
+  'Nabil Bank', 'NIMB', 'Nepal Bank', 'ADBL', 'Everest Bank', 'Citizens Bank', 'Muktinath', 'Shangrila', 'Mahalaxmi',
 ];
 
 export const education = [
@@ -65,7 +107,7 @@ export const education = [
     school: 'Wright State University',
     place: 'Fairborn, Ohio',
     when: 'Expected December 2027',
-    detail: '',
+    detail: 'GPA 4.00 / 4.00',
   },
   {
     degree: 'B.Sc. (Hons) Computing, First Class Honours',
@@ -78,17 +120,28 @@ export const education = [
 
 export const certifications = [
   'IBM AI Product Manager Professional Certificate',
-  'Google Agile Project Management',
-  'Scrum Master (Proshore)',
+  'Google Agile Project Management (Coursera)',
+  'Scrum Master Training (Proshore)',
+  'PHP Development Training (Proshore)',
+];
+
+// Little ticket stubs on the home page.
+export const recognition = [
+  { year: '2022', title: 'Key Contributor Award', where: 'Digital Product Labs', note: 'Fourteen straight days with the team, bringing back a company-wide sync outage.' },
+  { year: '2023', title: 'Speaker', where: 'Proshore knowledge sharing', note: 'Talk to an international audience on Hotjar and analytics-driven UX.', link: 'https://proshore.eu/kss-level-up-website-with-hotjar/' },
+  { year: '2024', title: 'Internship mentor', where: 'AMNIL Technologies', note: 'Designed and ran the PM internship: Agile, user stories, sprint structure, Jira.' },
+  { year: '2026', title: 'Vice Secretary', where: 'Nepal Student Association, Wright State', note: 'Also community service chair. Events, outreach and coordination.' },
 ];
 
 // Each note becomes a yellow sticky note on the home page.
 export const toolkit = [
-  { heading: 'Product', items: 'Discovery, backlogs, Scrum and LeSS, BRDs and SRS docs, KPI tracking' },
-  { heading: 'Build', items: 'PHP and Laravel, Python, TypeScript, Kotlin, C#, SQL' },
-  { heading: 'Data and infra', items: 'MySQL, PostgreSQL, Oracle, Redis, RabbitMQ, AWS, SLURM' },
-  { heading: 'AI and vision', items: 'MediaPipe, OpenCV, on-device LLMs (Gemma 2B)' },
-  { heading: 'Tools', items: 'Jira, Confluence, Figma, Lucidchart, Mixpanel' },
+  { heading: 'Product', items: 'User stories, backlogs, sprint planning, Scrum and LeSS, BRDs and SRS docs, KPIs' },
+  { heading: 'Banking', items: 'Core banking integrations, maker-checker flows, CDD and ECDD compliance' },
+  { heading: 'Build', items: 'PHP and Laravel, Python, JavaScript, SQL, REST APIs, Kotlin, C#' },
+  { heading: 'Data and infra', items: 'MySQL, Oracle, PostgreSQL, Redis, RabbitMQ, AWS, SLURM' },
+  { heading: 'AI and vision', items: 'MediaPipe, OpenCV, NumPy, on-device LLMs (Gemma 2B)' },
+  { heading: 'Commerce', items: 'Shopify, WooCommerce, Etsy, Amazon, eBay APIs' },
+  { heading: 'Tools', items: 'Jira, Confluence, ClickUp, Figma, Balsamiq, Lucidchart, Mixpanel' },
   { heading: 'Languages', items: 'Nepali, English, Hindi' },
 ];
 
@@ -120,7 +173,7 @@ export const principles = [
 export const heroFrames = [
   { art: 'stupa', caption: 'Kathmandu. Where it started.' },
   { art: 'laptop', caption: 'Remote for a US client. PHP dev to team lead.' },
-  { art: 'vault', caption: 'Banking and fintech, back in Kathmandu.' },
+  { art: 'vault', caption: 'Banking software for 16+ banks in Nepal.' },
   { art: 'biplane', caption: 'Fairborn, Ohio. M.S. at Wright State.' },
   { art: 'book', caption: 'Reading more. Reviews coming soon.' },
 ];
@@ -170,7 +223,10 @@ export const levels: Level[] = [
     when: 'Aug 2023 to Jan 2024',
     title: 'F1Soft International',
     art: 'vault',
-    story: ['Project manager for fintech products, onsite in Kathmandu.'],
+    story: ['Project manager for mobile and internet banking, running 16 financial institutions at once.'],
+    boss: 'Moving 100,000+ legacy customer records to a new system without losing a single one. Zero data loss, zero rollbacks.',
+    unlocked: ['Large Scale Scrum', 'Multi-client delivery', 'Data migration'],
+    projects: ['large-scale-banking-data-migration-and-validation'],
   },
   {
     n: 4,
@@ -178,26 +234,25 @@ export const levels: Level[] = [
     when: 'Mar 2024 to May 2025',
     title: 'AMNIL Technologies',
     art: 'dial',
-    story: ['Technical project manager for banking and fintech software, hybrid.'],
-  },
-  {
-    n: 5,
-    place: 'Side quests',
-    when: 'Along the way',
-    title: 'What I shipped',
-    art: 'coins',
-    story: [
-      'Bank account opening, payroll, access control, notifications, a banking CMS and a 100,000-record data migration. Plus Hivelaya, a learning and job-matching platform.',
-    ],
+    story: ['Technical project manager for enterprise banking products, with backend, frontend, QA, design and DevOps on the team.'],
+    boss: 'Opening a bank account took 3 days. Compliance automation brought it under an hour.',
+    unlocked: ['Core banking integrations', 'CDD and ECDD compliance', 'Mentoring PMs'],
     projects: [
       'digital-account-opening-and-compliance-automation-system',
       'automated-banking-payroll-processing-system',
       'enterprise-access-control-and-role-management-platform',
       'multi-channel-banking-notification-system',
       'banking-microsite-and-content-management-platform',
-      'large-scale-banking-data-migration-and-validation',
-      'learning-management-and-job-matching-platform',
     ],
+  },
+  {
+    n: 5,
+    place: 'Side quest',
+    when: 'Along the way',
+    title: 'Hivelaya',
+    art: 'cap',
+    story: ['A learning and job-matching platform in one: courses, skill checks, a resume builder and job matches. It served thousands of learners across Nepal.'],
+    projects: ['learning-management-and-job-matching-platform'],
   },
   {
     n: 6,
@@ -216,7 +271,7 @@ export const levels: Level[] = [
     title: 'Wright State University',
     art: 'peaks',
     story: [
-      'M.S. Computer Science, expected December 2027.',
+      'M.S. Computer Science with a 4.0 GPA, expected December 2027.',
       'Building on the side: an offline AI fitness app, a 2D action game, real-time pose tracking and route optimization on an HPC cluster.',
     ],
     unlocked: ['On-device AI', 'Game systems', 'Computer vision', 'High performance computing'],

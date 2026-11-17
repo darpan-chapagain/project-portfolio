@@ -13,6 +13,10 @@ results:
 stack:
   - "SQL"
   - "Oracle DB"
+company: "F1Soft International"
+art: "database"
+group: "fintech"
+featured: true
 ---
 
 ## Problem

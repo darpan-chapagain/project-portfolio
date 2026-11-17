@@ -18,6 +18,9 @@ stack:
   - "Redis"
   - "RabbitMQ"
   - "Workflow Engines"
+company: "AMNIL Technologies"
+art: "key"
+group: "fintech"
 ---
 
 ## Problem

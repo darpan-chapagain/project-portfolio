@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import Doodle from '../../components/Doodle.astro';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
@@ -15,14 +16,17 @@ const { Content } = await render(p);
 ---
 <Base title={p.data.title} description={p.data.summary}>
   <article class="wrap case">
-    <a class="back" href="/#work">Back to all work</a>
-    <header>
+    <a class="back" href="/work/">Back to all projects</a>
+    <header class="case-head">
+      <div class="head-art paper-shadow" aria-hidden="true"><div class="torn"><Doodle name={p.data.art} /></div></div>
       <p class="domain">{p.data.domain}</p>
       <h1 class="display">{p.data.title}</h1>
       {p.data.tagline && <p class="tagline">{p.data.tagline}</p>}
       <dl class="meta">
+        {p.data.company && <div><dt>Where</dt><dd>{p.data.company}{p.data.client && `, for ${p.data.client}`}</dd></div>}
         <div><dt>Role</dt><dd>{p.data.role}</dd></div>
         <div><dt>Stack</dt><dd>{p.data.stack.join(', ')}</dd></div>
+        {p.data.repo && <div><dt>Code</dt><dd><a href={p.data.repo}>See it on GitHub</a></dd></div>}
       </dl>
     </header>
 
@@ -50,11 +54,21 @@ const { Content } = await render(p);
   .case { padding-top: clamp(7.5rem, 12vw, 9rem); padding-bottom: 5rem; max-width: 900px; }
   .back { font-size: var(--s-16); color: var(--paper-dim); }
   header { margin: 2rem 0 2.5rem; }
+  .case-head { position: relative; padding-right: clamp(0px, 22vw, 230px); }
+  .head-art { position: absolute; top: 0.4rem; right: 0; width: clamp(130px, 18vw, 200px); transform: rotate(3deg); animation: art-in 900ms cubic-bezier(0.25, 1.3, 0.5, 1) both; }
+  .head-art .torn { padding: 1.4rem 1.2rem; color: var(--card-ink); }
+  .head-art :global(svg) { width: 100%; height: auto; }
+  @keyframes art-in { from { opacity: 0; transform: translateY(-30px) rotate(-8deg); } to { opacity: 1; transform: rotate(3deg); } }
+  @media (max-width: 640px) {
+    .case-head { padding-right: 0; padding-top: 7.5rem; }
+    .head-art { width: 120px; top: 0; left: 0; right: auto; }
+  }
   .domain { margin: 0 0 0.6rem; color: var(--paper-dim); font-size: var(--s-16); }
   h1 { font-size: clamp(3.2rem, 8vw, 6rem); }
   .tagline { font-size: var(--s-24); margin: 0.8rem 0 0; font-style: italic; color: var(--chalk); }
   .meta { margin: 1.8rem 0 0; display: grid; gap: 0.6rem; font-size: var(--s-16); }
   .meta div { display: grid; grid-template-columns: 70px 1fr; gap: 1rem; }
+  .meta a { color: var(--paper); }
   .meta dt { color: var(--paper-dim); }
   .meta dd { margin: 0; }
 

@@ -18,6 +18,9 @@ stack:
   - "Etsy"
   - "Amazon"
   - "eBay APIs"
+company: "Proshore (Digital Product Labs)"
+art: "sync"
+group: "platforms"
 ---
 
 ## Problem

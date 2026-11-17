@@ -16,6 +16,12 @@ const projects = defineCollection({
     summary: z.string(),
     results: z.array(z.string()).default([]),
     stack: z.array(z.string()).default([]),
+    company: z.string().optional(),
+    client: z.string().optional(),
+    art: z.string().default('star'),
+    group: z.enum(['fintech', 'platforms', 'ai', 'games']).default('fintech'),
+    featured: z.boolean().default(false),
+    repo: z.string().url().optional(),
   }),
 });
 
