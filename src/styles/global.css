@@ -8,7 +8,8 @@
 @import 'lenis/dist/lenis.css';
 
 :root {
-  /* Night over the valley, handmade lokta paper, pencil, and one sticky note. */
+  /* Night over the valley, handmade lokta paper, pencil, and one sticky note.
+     --ink is the page, --paper is the type on it, --chalk is pencil line. */
   --ink: #15130f;
   --ink-2: #1f1c17;
   --paper: #e8e1d1;
@@ -18,6 +19,19 @@
   --graphite: #6f6a60;
   --postit: #ecd96f;
   --postit-ink: #2b2614;
+  --ink-rgb: 21 19 15;
+  --paper-rgb: 232 225 209;
+  --chalk-rgb: 214 207 191;
+  /* Torn paper cards stay paper-coloured in both themes. */
+  --card: #e8e1d1;
+  --card-ink: #15130f;
+  --card-ink-rgb: 21 19 15;
+  --accent: var(--postit);
+  --shadow: rgb(0 0 0 / 0.45);
+  --shadow-soft: rgb(0 0 0 / 0.6);
+  --tape: rgb(226 219 196 / 0.72);
+  --grain-opacity: 0.07;
+  color-scheme: dark;
 
   --display: 'League Gothic', 'Impact', 'Arial Narrow', sans-serif;
   --text: 'Literata Variable', 'Georgia', serif;
@@ -41,6 +55,29 @@
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+/* Daytime: the same collage printed on lokta paper, pencil in ink. */
+:root[data-theme='light'] {
+  --ink: #ece5d5;
+  --ink-2: #e2dac8;
+  --paper: #1c1915;
+  --paper-dim: #5b5549;
+  --chalk: #2f2b24;
+  --chalk-2: #7d7668;
+  --graphite: #a39b8b;
+  --ink-rgb: 236 229 213;
+  --paper-rgb: 28 25 21;
+  --chalk-rgb: 47 43 36;
+  --card: #fbf8f0;
+  --card-ink: #1c1915;
+  --card-ink-rgb: 28 25 21;
+  --accent: #8a6b0f;
+  --shadow: rgb(70 52 20 / 0.2);
+  --shadow-soft: rgb(70 52 20 / 0.3);
+  --tape: rgb(205 194 160 / 0.75);
+  --grain-opacity: 0.09;
+  color-scheme: light;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
@@ -52,6 +89,8 @@ html {
   scroll-behavior: smooth;
 }
 html.smooth { scroll-behavior: auto; }
+/* Theme switch: the new theme is revealed by a growing circle (see motion.ts). */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 /* Leave room for the sticky navbar when jumping to a section. */
 section[id] { scroll-margin-top: 72px; }
 
@@ -71,8 +110,13 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  opacity: 0.07;
+  opacity: var(--grain-opacity);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+:root[data-theme='light'] body::after {
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0 0.05 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 img, svg { max-width: 100%; }
@@ -81,7 +125,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 a:hover { text-decoration-thickness: 2px; }
 
 :focus-visible {
-  outline: 2px dashed var(--postit);
+  outline: 2px dashed var(--accent);
   outline-offset: 4px;
   border-radius: 2px;
 }
@@ -130,8 +174,8 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   --boil: torn-boil 0.62s steps(1, end) infinite;
 }
 .torn {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--card-ink);
   clip-path: var(--torn-0);
   animation: var(--boil);
 }
@@ -141,7 +185,7 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   66.666% { clip-path: var(--torn-2); }
 }
 /* A wrapper that casts the paper's shadow, following the torn edge. */
-.paper-shadow { filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.45)); }
+.paper-shadow { filter: drop-shadow(0 12px 14px var(--shadow)); }
 
 /* Line boil for the doodles: the ink wobbles a little, frame by frame. */
 .doodle .ink { animation: ink-boil 0.5s steps(1, end) infinite; }
@@ -160,13 +204,13 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   0% {
     opacity: 0;
     transform: translate(0, 0.5em);
-    text-shadow: 0 -0.12em 0 rgb(232 225 209 / 0.45), 0 -0.24em 0 rgb(232 225 209 / 0.3), 0 -0.36em 0 rgb(232 225 209 / 0.18), 0 -0.48em 0 rgb(232 225 209 / 0.08);
+    text-shadow: 0 -0.12em 0 rgb(var(--paper-rgb) / 0.45), 0 -0.24em 0 rgb(var(--paper-rgb) / 0.3), 0 -0.36em 0 rgb(var(--paper-rgb) / 0.18), 0 -0.48em 0 rgb(var(--paper-rgb) / 0.08);
   }
   25% { opacity: 1; }
   100% {
     opacity: 1;
     transform: none;
-    text-shadow: 0 0 0 rgb(232 225 209 / 0), 0 0 0 rgb(232 225 209 / 0), 0 0 0 rgb(232 225 209 / 0), 0 0 0 rgb(232 225 209 / 0);
+    text-shadow: 0 0 0 rgb(var(--paper-rgb) / 0), 0 0 0 rgb(var(--paper-rgb) / 0), 0 0 0 rgb(var(--paper-rgb) / 0), 0 0 0 rgb(var(--paper-rgb) / 0);
   }
 }
 

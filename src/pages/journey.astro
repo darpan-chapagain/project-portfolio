@@ -79,7 +79,7 @@ const title = (id: string) => projects.find((p) => p.id === id)?.data.title ?? i
     content: '';
     position: absolute;
     inset: 8px;
-    border: 1px dashed rgb(214 207 191 / 0.25);
+    border: 1px dashed rgb(var(--chalk-rgb) / 0.25);
     pointer-events: none;
   }
   .shot :global(.shot-art) { width: 46%; max-height: 70%; }
@@ -89,7 +89,7 @@ const title = (id: string) => projects.find((p) => p.id === id)?.data.title ?? i
   .when { margin: 0 0 0.2rem; color: var(--paper-dim); font-size: var(--s-16); }
   .notes h2 { font-size: clamp(2.4rem, 5vw, 3.6rem); margin-bottom: 0.7rem; }
   .notes p { margin: 0 0 0.8rem; max-width: 56ch; }
-  .notes .hand { font-size: 1.1em; color: var(--postit); margin-right: 0.25rem; }
+  .notes .hand { font-size: 1.1em; color: var(--accent); margin-right: 0.25rem; }
   .boss, .unlocked { font-size: var(--s-16); color: var(--chalk); }
   .links { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: var(--s-16); }
   .links li + li { margin-top: 0.25rem; }

@@ -181,7 +181,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     height: 30px;
     translate: -50% 0;
     rotate: calc(var(--r) * -2.4);
-    background: rgb(226 219 196 / 0.72);
+    background: var(--tape);
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
     clip-path: polygon(2% 8%, 98% 0, 100% 92%, 0 100%);
     z-index: 2;
@@ -189,7 +189,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .scrap { padding: 2.4rem 2rem 1.8rem; height: 100%; }
   .scrap h3 { font-size: clamp(2rem, 3.4vw, 2.75rem); margin-bottom: 0.7rem; }
   .scrap p { margin: 0 0 1rem; font-size: var(--s-16); max-width: 46ch; }
-  .scrap a { font-size: var(--s-14); color: #4d483f; }
+  .scrap a { font-size: var(--s-14); color: rgb(var(--card-ink-rgb) / 0.72); }
 
   .js .scraps:not(.is-in) .scrap-wrap { opacity: 0; }
   .scraps.is-in .scrap-wrap { animation: tape-up 1.15s cubic-bezier(0.34, 1.5, 0.64, 1) backwards; animation-delay: calc(var(--i) * 150ms); }
@@ -213,9 +213,9 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
     gap: 1.5rem;
     padding-block: 1.8rem;
-    border-top: 1px solid rgb(214 207 191 / 0.18);
+    border-top: 1px solid rgb(var(--chalk-rgb) / 0.18);
   }
-  .role:last-child { border-bottom: 1px solid rgb(214 207 191 / 0.18); }
+  .role:last-child { border-bottom: 1px solid rgb(var(--chalk-rgb) / 0.18); }
   .when { margin: 0.35rem 0 0; color: var(--paper-dim); font-size: var(--s-16); }
   .role h3 { font-family: var(--display); text-transform: uppercase; font-size: clamp(2rem, 3.4vw, 2.6rem); line-height: 1; }
   .titles { margin: 0.4rem 0 0; font-weight: 600; }
@@ -238,7 +238,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     padding: 1.1rem 1.1rem 1.4rem;
     transform: rotate(var(--r, -2deg));
     transform-origin: 50% 0;
-    box-shadow: 0 14px 18px -12px rgb(0 0 0 / 0.6);
+    box-shadow: 0 14px 18px -12px var(--shadow-soft);
     font-size: var(--s-18);
     line-height: 1.35;
     transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 380ms ease;
@@ -255,7 +255,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     background: linear-gradient(135deg, rgb(0 0 0 / 0) 50%, rgb(0 0 0 / 0.12) 50%, rgb(255 255 255 / 0.25) 100%);
     transition: width 380ms ease, height 380ms ease;
   }
-  .postit:hover { transform: rotate(calc(var(--r, -2deg) * -0.6)) translateY(-6px) scale(1.03); box-shadow: 0 26px 26px -16px rgb(0 0 0 / 0.7); }
+  .postit:hover { transform: rotate(calc(var(--r, -2deg) * -0.6)) translateY(-6px) scale(1.03); box-shadow: 0 26px 26px -16px var(--shadow-soft); }
   .postit:hover::after { width: 34px; height: 34px; }
   .js .notes-wall:not(.is-in) .postit { opacity: 0; }
   .notes-wall.is-in .postit { animation: stick 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; animation-delay: calc(var(--i) * 90ms); }
@@ -270,7 +270,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .edu-list li + li { margin-top: 1.4rem; }
   .edu-list p { margin: 0; }
   .degree { font-weight: 600; }
-  .cert-list li { padding-block: 0.55rem; border-top: 1px solid rgb(214 207 191 / 0.18); font-size: var(--s-16); }
+  .cert-list li { padding-block: 0.55rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); font-size: var(--s-16); }
   .muted { color: var(--paper-dim); font-size: var(--s-16); }
 
   /* Reading */
@@ -278,12 +278,12 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .empty :global(.empty-art) { width: 110px; flex: none; color: var(--chalk); }
   .empty p { margin: 0; }
   .post-list { list-style: none; margin: 0; padding: 0; }
-  .post-list li { padding-block: 1rem; border-top: 1px solid rgb(214 207 191 / 0.18); }
+  .post-list li { padding-block: 1rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); }
   .post-list a { font-size: var(--s-24); }
   .post-list p { margin: 0.2rem 0 0; }
 
   /* Contact */
-  .contact { border-top: 1px solid rgb(214 207 191 / 0.14); }
+  .contact { border-top: 1px solid rgb(var(--chalk-rgb) / 0.14); }
   .contact-inner { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1rem 3rem; align-items: end; position: relative; }
   .start { font-size: clamp(5rem, 15vw, 12rem); grid-column: 1 / -1; }
   .lede { margin: 0 0 1.2rem; max-width: 44ch; }

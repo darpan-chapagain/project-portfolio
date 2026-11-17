@@ -72,7 +72,7 @@ const { Content } = await render(p);
   .prose :global(ul) { padding-left: 1.2rem; }
   .prose :global(li + li) { margin-top: 0.35rem; }
 
-  .next { margin-top: 4.5rem; border-top: 1px solid rgb(214 207 191 / 0.18); padding-top: 1.5rem; }
+  .next { margin-top: 4.5rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); padding-top: 1.5rem; }
   .next a { text-decoration: none; display: grid; gap: 0.2rem; }
   .next .hand { color: var(--paper-dim); font-size: var(--s-18); }
   .next .display { font-size: clamp(2.2rem, 5vw, 3.4rem); }

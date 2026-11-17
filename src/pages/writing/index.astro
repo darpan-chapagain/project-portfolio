@@ -44,7 +44,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .empty :global(.empty-art) { width: 120px; flex: none; }
   .empty p { margin: 0 0 0.4rem; }
   .list { list-style: none; margin: 0; padding: 0; max-width: 760px; }
-  .list li { padding-block: 1.6rem; border-top: 1px solid rgb(214 207 191 / 0.18); }
+  .list li { padding-block: 1.6rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); }
   .list .display { font-size: clamp(2.2rem, 5vw, 3.2rem); text-decoration: none; }
   .list .display:hover { text-decoration: underline; }
   .meta { margin: 0 0 0.3rem; color: var(--paper-dim); font-size: var(--s-16); }

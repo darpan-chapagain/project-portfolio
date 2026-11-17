@@ -56,15 +56,15 @@ const { items, label } = Astro.props;
     min-height: 230px;
     height: 100%;
     padding: 1.1rem 1.1rem 1rem;
-    background: var(--paper);
-    color: var(--ink);
+    background: var(--card);
+    color: var(--card-ink);
     text-decoration: none;
     transition: transform 240ms var(--ease);
   }
   .domain { font-size: var(--s-14); color: #5b564c; }
   .title { font-size: clamp(2.2rem, 3vw, 2.75rem); line-height: 0.92; align-self: start; }
   .result { font-style: italic; font-size: var(--s-16); line-height: 1.4; }
-  .role { font-size: var(--s-14); color: #5b564c; border-top: 1px solid rgb(21 19 15 / 0.18); padding-top: 0.5rem; }
+  .role { font-size: var(--s-14); color: #5b564c; border-top: 1px solid rgb(var(--card-ink-rgb) / 0.18); padding-top: 0.5rem; }
 
   /* Grease-pencil circle, the way editors mark picks on a contact sheet. */
   .pick {

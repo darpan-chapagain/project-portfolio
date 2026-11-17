@@ -188,8 +188,8 @@ const [neFirst, neLast] = person.nepaliFull;
   }
   .frame.is-on { visibility: visible; animation: cut 260ms steps(2, end), var(--boil); }
   .frame:not(.is-on) :global(.ink) { animation: none; filter: none; }
-  .frame :global(.frame-art) { width: 72%; height: 100%; max-height: 220px; margin: auto; color: var(--ink); }
-  .frame figcaption { font-size: var(--s-21); line-height: 1.25; color: var(--ink); }
+  .frame :global(.frame-art) { width: 72%; height: 100%; max-height: 220px; margin: auto; color: var(--card-ink); }
+  .frame figcaption { font-size: var(--s-21); line-height: 1.25; color: var(--card-ink); }
 
   /* The name, printed on both sides of the sheet. */
   .name {
@@ -233,8 +233,8 @@ const [neFirst, neLast] = person.nepaliFull;
     100% { scale: 1; }
   }
   @keyframes paper-light {
-    0%, 100% { color: var(--paper); text-shadow: 0 0 0 rgb(0 0 0 / 0); }
-    45% { color: #fffaf0; text-shadow: 0 0.12em 0.08em rgb(0 0 0 / 0.55); }
+    0%, 100% { text-shadow: 0 0 0 transparent; }
+    45% { text-shadow: 0 0.12em 0.08em var(--shadow-soft); }
   }
 
   .entry {
@@ -257,7 +257,7 @@ const [neFirst, neLast] = person.nepaliFull;
   .say {
     margin: 0.2rem 0 0.7rem;
     padding-bottom: 0.6rem;
-    border-bottom: 1px solid rgb(214 207 191 / 0.3);
+    border-bottom: 1px solid rgb(var(--chalk-rgb) / 0.3);
     font-size: var(--s-16);
     color: var(--paper-dim);
   }
@@ -290,7 +290,7 @@ const [neFirst, neLast] = person.nepaliFull;
   .history-body {
     margin-top: 0.7rem;
     padding: 0.2rem 0 0.2rem 1rem;
-    border-left: 1px solid rgb(214 207 191 / 0.35);
+    border-left: 1px solid rgb(var(--chalk-rgb) / 0.35);
     font-size: var(--s-16);
     color: var(--chalk);
     max-width: 50ch;

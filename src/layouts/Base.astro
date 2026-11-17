@@ -26,13 +26,23 @@ const nav = [
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#15130f" />
+    <meta name="theme-color" content="#15130f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ece5d5" media="(prefers-color-scheme: light)" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta name="twitter:card" content="summary" />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+      // Pick the theme before anything paints: saved choice first, then the system setting.
+      (function () {
+        var d = document.documentElement, t;
+        try { t = localStorage.getItem('theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        d.dataset.theme = t;
+        d.classList.add('js');
+      })();
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -55,6 +65,15 @@ const nav = [
           ))}
         </ul>
       </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch theme" title="Switch theme">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" />
+        </svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19.5 14.8A8 8 0 0 1 9.2 4.5a8 8 0 1 0 10.3 10.3Z" />
+        </svg>
+      </button>
     </header>
 
     <main id="main">
@@ -92,10 +111,10 @@ const nav = [
   }
   .topbar.scrolled {
     padding-block: 0.6rem;
-    background-color: rgb(21 19 15 / 0.8);
+    background-color: rgb(var(--ink-rgb) / 0.8);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    border-bottom-color: rgb(214 207 191 / 0.1);
+    border-bottom-color: rgb(var(--chalk-rgb) / 0.1);
   }
   .mark {
     font-size: 2.1rem;
@@ -106,6 +125,25 @@ const nav = [
     transition: font-size 400ms var(--ease);
   }
   .topbar.scrolled .mark { font-size: 1.65rem; }
+  .theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    margin-left: clamp(0.6rem, 2vw, 1.4rem);
+    padding: 0;
+    border: 1px solid rgb(var(--chalk-rgb) / 0.35);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--paper);
+    cursor: pointer;
+    transition: border-color 300ms ease, transform 500ms var(--ease);
+  }
+  .theme-toggle:hover { border-color: var(--paper); transform: rotate(-20deg); }
+  .theme-toggle svg { grid-area: 1 / 1; width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity 300ms ease, transform 500ms var(--ease); }
+  /* Show the sun in the dark (switch to day), the moon in the day. */
+  :global([data-theme='light']) .theme-toggle .sun, :global([data-theme='dark']) .theme-toggle .moon { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+  nav { margin-left: auto; }
   nav ul { display: flex; gap: clamp(0.9rem, 3vw, 2rem); list-style: none; margin: 0; padding: 0; }
   nav a { text-decoration: none; font-size: var(--s-16); color: var(--paper-dim); }
   nav a:hover, nav a[aria-current='page'] { color: var(--paper); text-decoration: underline; }
@@ -119,11 +157,12 @@ const nav = [
     color: var(--graphite);
     font-size: var(--s-14);
   }
-  .foot::before { content: ''; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid rgb(214 207 191 / 0.18); }
+  .foot::before { content: ''; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); }
   .foot p { margin: 0; display: flex; gap: 1.25rem; flex-wrap: wrap; }
   .foot a { color: var(--paper-dim); }
   @media (max-width: 520px) {
-    nav ul { gap: 0.85rem; }
+    nav ul { gap: 0.7rem; }
+    .theme-toggle { width: 1.9rem; height: 1.9rem; margin-left: 0.6rem; }
     nav a { font-size: var(--s-14); }
     .mark { font-size: 1.7rem; }
     .topbar.scrolled .mark { font-size: 1.45rem; }

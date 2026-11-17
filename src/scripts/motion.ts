@@ -13,6 +13,56 @@ if (!reduce) {
   root.classList.add('smooth');
 }
 
+/* ---------- Theme ---------- */
+// Canvas lines read their colours from CSS, so they follow the theme.
+let lineRGB = '214 207 191';
+let dotRGB = '232 225 209';
+const readColours = () => {
+  const cs = getComputedStyle(root);
+  lineRGB = cs.getPropertyValue('--chalk-rgb').trim() || lineRGB;
+  dotRGB = cs.getPropertyValue('--paper-rgb').trim() || dotRGB;
+};
+readColours();
+
+const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+const labelToggle = () => {
+  const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+  toggle?.setAttribute('aria-label', `Switch to ${next} theme`);
+  toggle?.setAttribute('title', `Switch to ${next} theme`);
+};
+labelToggle();
+
+function setTheme(next: 'light' | 'dark', save: boolean) {
+  root.dataset.theme = next;
+  if (save) { try { localStorage.setItem('theme', next); } catch { /* storage may be blocked */ } }
+  readColours();
+  labelToggle();
+}
+
+toggle?.addEventListener('click', () => {
+  const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => { ready: Promise<void> } };
+  if (reduce || !doc.startViewTransition) { setTheme(next, true); return; }
+  // A circle of the new theme grows out of the button.
+  const r = toggle.getBoundingClientRect();
+  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+  const vt = doc.startViewTransition(() => setTheme(next, true));
+  vt.ready.then(() => {
+    root.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+      { duration: 700, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', pseudoElement: '::view-transition-new(root)' }
+    );
+  });
+});
+
+// Follow the system setting until the visitor picks one.
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+  let saved: string | null = null;
+  try { saved = localStorage.getItem('theme'); } catch { /* ignore */ }
+  if (!saved) setTheme(e.matches ? 'light' : 'dark', false);
+});
+
 /* ---------- Sticky navbar ---------- */
 const topbar = document.querySelector<HTMLElement>('.topbar');
 let barTicking = false;
@@ -148,7 +198,7 @@ function createHub(area: HTMLElement) {
     const diag = Math.hypot(w, h);
     ctx!.lineWidth = 0.7;
 
-    ctx!.strokeStyle = `rgba(214, 207, 191, ${(strength * 0.3).toFixed(3)})`;
+    ctx!.strokeStyle = `rgb(${lineRGB} / ${(strength * 0.3).toFixed(3)})`;
     for (const [i, j] of pairs) {
       if (j < 0) continue;
       ctx!.beginPath();
@@ -159,17 +209,17 @@ function createHub(area: HTMLElement) {
     for (const [x, y] of pts) {
       const d = Math.hypot(x - pos.x, y - pos.y);
       const a = Math.max(strength * 0.12, strength - (d / diag) * strength * 1.3);
-      ctx!.strokeStyle = `rgba(214, 207, 191, ${a.toFixed(3)})`;
+      ctx!.strokeStyle = `rgb(${lineRGB} / ${a.toFixed(3)})`;
       ctx!.beginPath();
       ctx!.moveTo(pos.x, pos.y);
       ctx!.lineTo(x, y);
       ctx!.stroke();
     }
-    ctx!.fillStyle = `rgba(232, 225, 209, ${Math.min(0.9, strength * 2.1).toFixed(2)})`;
+    ctx!.fillStyle = `rgb(${dotRGB} / ${Math.min(0.9, strength * 2.1).toFixed(2)})`;
     ctx!.beginPath();
     ctx!.arc(pos.x, pos.y, 2.2, 0, Math.PI * 2);
     ctx!.fill();
-    ctx!.strokeStyle = `rgba(232, 225, 209, ${(strength * 0.65).toFixed(3)})`;
+    ctx!.strokeStyle = `rgb(${dotRGB} / ${(strength * 0.65).toFixed(3)})`;
     ctx!.beginPath();
     ctx!.arc(pos.x, pos.y, 8 + Math.sin(t * 0.004) * 1.5, 0, Math.PI * 2);
     ctx!.stroke();

@@ -108,9 +108,9 @@ const pixels = [
     display: grid;
     justify-items: center;
     gap: 1.5rem;
-    border-block: 1px solid rgb(214 207 191 / 0.14);
+    border-block: 1px solid rgb(var(--chalk-rgb) / 0.14);
     background:
-      radial-gradient(circle at 50% 45%, rgb(232 225 209 / 0.05), transparent 55%),
+      radial-gradient(circle at 50% 45%, rgb(var(--paper-rgb) / 0.05), transparent 55%),
       var(--ink);
   }
   .stage {
@@ -145,9 +145,9 @@ const pixels = [
   .js .echo-ring { opacity: 0; }
   .echo-ring.is-in { animation: ring-in 1200ms var(--ease) both; }
   @keyframes ring-in {
-    0% { opacity: 0; transform: scale(0.88); filter: drop-shadow(0 -14px 0 rgb(232 225 209 / 0.35)) drop-shadow(0 -28px 0 rgb(232 225 209 / 0.2)) drop-shadow(0 -42px 0 rgb(232 225 209 / 0.1)); }
+    0% { opacity: 0; transform: scale(0.88); filter: drop-shadow(0 -14px 0 rgb(var(--paper-rgb) / 0.35)) drop-shadow(0 -28px 0 rgb(var(--paper-rgb) / 0.2)) drop-shadow(0 -42px 0 rgb(var(--paper-rgb) / 0.1)); }
     30% { opacity: 1; }
-    100% { opacity: 1; transform: none; filter: drop-shadow(0 0 0 rgb(232 225 209 / 0)) drop-shadow(0 0 0 rgb(232 225 209 / 0)) drop-shadow(0 0 0 rgb(232 225 209 / 0)); }
+    100% { opacity: 1; transform: none; filter: drop-shadow(0 0 0 rgb(var(--paper-rgb) / 0)) drop-shadow(0 0 0 rgb(var(--paper-rgb) / 0)) drop-shadow(0 0 0 rgb(var(--paper-rgb) / 0)); }
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -159,13 +159,13 @@ const pixels = [
     display: grid;
     place-items: center;
     background: #cfc8b8;
-    color: var(--ink);
+    color: #15130f;
   }
   .leader[hidden] { display: none; }
   .leader svg { width: min(90vmin, 640px); position: relative; z-index: 2; }
-  .l-ring { fill: none; stroke: var(--ink); stroke-width: 3; }
-  .l-cross { stroke: var(--ink); stroke-width: 2; }
-  .l-num { font-family: var(--display); font-size: 190px; fill: var(--ink); }
+  .l-ring { fill: none; stroke: #15130f; stroke-width: 3; }
+  .l-cross { stroke: #15130f; stroke-width: 2; }
+  .l-num { font-family: var(--display); font-size: 190px; fill: #15130f; }
   .sweep {
     position: absolute;
     width: calc(min(90vmin, 640px) * 0.9);
