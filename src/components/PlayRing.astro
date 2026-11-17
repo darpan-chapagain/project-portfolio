@@ -20,9 +20,9 @@ const pixels = [
   <h2 id="play-title" class="sr-only">Play my journey</h2>
 
   <div class="stage">
-    <span class="cue cue-l hand" aria-hidden="true">click to play <Doodle name="arrow" class="cue-arrow" /></span>
+    <span class="cue cue-l hand" aria-hidden="true" data-depth="0.5">click to play <Doodle name="arrow" class="cue-arrow" /></span>
 
-    <a class="ring-link" href="/journey/" data-countdown aria-label="Play my journey">
+    <a class="ring-link" href="/journey/" data-countdown aria-label="Play my journey" data-speed="0.06" data-depth="0.15">
       <svg class="ring echo-ring" viewBox="-222 -222 444 444" aria-hidden="true">
         <defs>
           <path id="ring-path" d={`M 0 ${-R} A ${R} ${R} 0 1 1 -0.01 ${-R} Z`} />
@@ -43,10 +43,10 @@ const pixels = [
       </svg>
     </a>
 
-    <span class="cue cue-r hand" aria-hidden="true"><Doodle name="arrow" class="cue-arrow flip" /> click to play</span>
+    <span class="cue cue-r hand" aria-hidden="true" data-depth="0.5"><Doodle name="arrow" class="cue-arrow flip" /> click to play</span>
   </div>
 
-  <p class="blurb">From a classroom in Kathmandu to Dayton, Ohio, one level at a time. A playable version is in the works.</p>
+  <p class="blurb">From a classroom in Kathmandu to Wright State University in Ohio, one level at a time. A playable version is in the works.</p>
 
   <div class="leader" hidden aria-hidden="true">
     <svg viewBox="-200 -200 400 400">

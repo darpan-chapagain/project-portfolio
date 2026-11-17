@@ -4,8 +4,9 @@ interface Props {
   name: string;
   class?: string;
   label?: string;
+  still?: boolean;
 }
-const { name, class: cls = '', label } = Astro.props;
+const { name, class: cls = '', label, still = false } = Astro.props;
 
 const art: Record<string, { vb: string; d: string }> = {
   peaks: {
@@ -109,10 +110,12 @@ const art: Record<string, { vb: string; d: string }> = {
 };
 
 const a = art[name];
+// Small marks don't boil; it reads as noise at that size.
+const calm = still || name === 'star' || name === 'arrow';
 ---
 {a && (
   <svg
-    class={`doodle ${cls}`}
+    class={`doodle ${calm ? 'still' : ''} ${cls}`}
     viewBox={a.vb}
     fill="none"
     stroke="currentColor"
@@ -122,7 +125,7 @@ const a = art[name];
     role={label ? 'img' : undefined}
     aria-label={label}
     aria-hidden={label ? undefined : 'true'}
-    set:html={a.d}
+    set:html={`<g class="ink">${a.d}</g>`}
   />
 )}
 

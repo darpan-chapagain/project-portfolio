@@ -1,9 +1,9 @@
 ---
 // A string of prayer flags. The five traditional colours become five tones of paper.
-interface Props { class?: string; count?: number; sag?: number }
-const { class: cls = '', count = 23, sag = 30 } = Astro.props;
+interface Props { class?: string; count?: number; sag?: number; width?: number }
+const { class: cls = '', count = 23, sag = 30, width = 1000 } = Astro.props;
 
-const W = 1000, y0 = 8, y1 = 20;
+const W = width, y0 = 8, y1 = 20;
 const tones = ['var(--paper)', 'var(--chalk-2)', 'var(--graphite)', 'transparent', 'var(--paper-dim)'];
 const point = (t: number) => {
   // quadratic bezier from (0,y0) via (W/2, y0+sag*2) to (W,y1)

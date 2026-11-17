@@ -36,6 +36,16 @@ const nav = [
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
+    <svg class="filters" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        {[3, 17, 41].map((seed, i) => (
+          <filter id={`boil-${i}`} x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed={seed} />
+            <feDisplacementMap in="SourceGraphic" scale="2.4" />
+          </filter>
+        ))}
+      </defs>
+    </svg>
     <header class="topbar">
       <a class="mark display" href="/" aria-label={`${person.name}, home`}>DC</a>
       <nav aria-label="Main">
@@ -61,24 +71,13 @@ const nav = [
     </footer>
 
     <script>
-      // Reveal big headings with the echo effect as they scroll into view.
-      const els = document.querySelectorAll('.echo, .echo-ring');
-      if (!('IntersectionObserver' in window)) {
-        els.forEach((el) => el.classList.add('is-in'));
-      } else {
-        const io = new IntersectionObserver(
-          (entries) => entries.forEach((e) => {
-            if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-          }),
-          { threshold: 0.35 }
-        );
-        els.forEach((el) => io.observe(el));
-      }
+      import '../scripts/motion.ts';
     </script>
   </body>
 </html>
 
 <style>
+  .filters { position: absolute; width: 0; height: 0; overflow: hidden; }
   .topbar {
     position: absolute;
     inset: 0 0 auto 0;

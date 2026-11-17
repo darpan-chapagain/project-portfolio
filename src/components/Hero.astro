@@ -3,54 +3,57 @@ import Doodle from './Doodle.astro';
 import Flags from './Flags.astro';
 import { person, heroFrames } from '../data/site';
 
-// Constellation: doodles and stars joined by thin lines (percent of the hero box).
+// Stars scattered around the hero (percent of the hero box). Lines from the cursor reach these and the doodles.
 const stars = [
-  { x: 19, y: 22 }, { x: 27, y: 74 }, { x: 77, y: 12 }, { x: 70, y: 90 }, { x: 93, y: 52 }, { x: 4, y: 58 },
+  { x: 19, y: 24 }, { x: 28, y: 76 }, { x: 74, y: 14 }, { x: 68, y: 91 }, { x: 94, y: 50 }, { x: 4, y: 60 }, { x: 46, y: 18 },
 ];
-const lines = [
-  [9, 36, 19, 22], [19, 22, 30, 15], [88, 33, 77, 12], [77, 12, 64, 16],
-  [86, 80, 70, 90], [93, 52, 86, 80], [16, 84, 27, 74], [4, 58, 9, 36], [93, 52, 90, 30],
-];
+const [first, last] = [person.first, person.last];
+const [neFirst, neLast] = person.nepaliFull;
 ---
 <section class="hero" aria-labelledby="hero-name">
-  <div class="hero-flags"><Flags /></div>
+  <div class="hero-flags" data-speed="0.12">
+    <div class="fl-d"><Flags /></div>
+    <div class="fl-m"><Flags width={440} count={10} sag={22} /></div>
+  </div>
+  <canvas class="hub" aria-hidden="true"></canvas>
 
-  <svg class="constellation" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-    {lines.map(([x1, y1, x2, y2], i) => (
-      <line x1={x1} y1={y1} x2={x2} y2={y2} pathLength="1" style={`--i:${i}`} />
-    ))}
-    {stars.map((s) => <circle cx={s.x} cy={s.y} r="0.25" />)}
-  </svg>
-
-  <div class="d d-biplane"><Doodle name="biplane" /></div>
-  <div class="d d-peaks"><Doodle name="peaks" /></div>
-  <div class="d d-book"><Doodle name="book" /></div>
-  <div class="d d-dial"><Doodle name="dial" /></div>
-  <div class="d d-plane"><Doodle name="plane" /></div>
+  <div class="d d-biplane" data-depth="0.9" data-speed="0.18"><Doodle name="biplane" /></div>
+  <div class="d d-peaks" data-depth="0.35" data-speed="0.1"><Doodle name="peaks" /></div>
+  <div class="d d-book" data-depth="0.7" data-speed="-0.06"><Doodle name="book" /></div>
+  <div class="d d-dial" data-depth="1" data-speed="0.22"><Doodle name="dial" /></div>
+  <div class="d d-plane" data-depth="1.2" data-speed="-0.1"><Doodle name="plane" /></div>
   {stars.map((s, i) => (
-    <div class="d d-star" style={`left:${s.x}%;top:${s.y}%;--i:${i}`}><Doodle name="star" /></div>
+    <div class="d d-star" style={`left:${s.x}%;top:${s.y}%;--i:${i}`} data-depth={(0.4 + (i % 3) * 0.35).toFixed(2)}><Doodle name="star" /></div>
   ))}
 
   <div class="hero-inner wrap">
-    <figure class="reel" aria-label="Snapshots from my story">
-      {heroFrames.map((f, i) => (
-        <div class:list={['frame torn', { 'is-on': i === 0 }]} data-frame={i}>
-          <Doodle name={f.art} class="frame-art" />
-          <figcaption class="hand">{f.caption}</figcaption>
-        </div>
-      ))}
-    </figure>
+    <div class="reel-wrap paper-shadow" data-depth="0.25" data-speed="-0.05">
+      <figure class="reel" aria-label="Snapshots from my story">
+        {heroFrames.map((f, i) => (
+          <div class:list={['frame torn', { 'is-on': i === 0 }]} data-frame={i}>
+            <Doodle name={f.art} class="frame-art" />
+            <figcaption class="hand">{f.caption}</figcaption>
+          </div>
+        ))}
+      </figure>
+    </div>
 
-    <div class="intro">
-      <h1 id="hero-name" class="display name">
-        <span>{person.first}</span>
-        <span>{person.last}</span>
+    <div class="intro" data-depth="0.12">
+      <h1 id="hero-name" class="name" aria-label={person.name} title="Click to switch script">
+        <span class="word" aria-hidden="true">
+          <span class="face en display">{first}</span>
+          <span class="face ne" lang="ne">{neFirst}</span>
+        </span>
+        <span class="word" aria-hidden="true">
+          <span class="face en display">{last}</span>
+          <span class="face ne" lang="ne">{neLast}</span>
+        </span>
       </h1>
       <div class="entry">
         <p class="pron"><span>[{person.pronunciation}]</span> <em>noun</em></p>
         <ol>
           <li>A technical product manager with four years of shipping software, most recently banking systems that aren't allowed to fail.</li>
-          <li>Now an M.S. Computer Science student in {person.location}, building on-device AI and the odd video game on the side.</li>
+          <li>Now an M.S. Computer Science student at {person.school} in {person.location}, building on-device AI and the odd video game on the side.</li>
         </ol>
         <p class="etym">From Nepali <span lang="ne">{person.nepali}</span>, a mirror.</p>
       </div>
@@ -61,9 +64,10 @@ const lines = [
 </section>
 
 <script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
   // Swap the snapshot in the torn frame, like cuts in a reel.
   const frames = Array.from(document.querySelectorAll<HTMLElement>('.reel .frame'));
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   let i = 0;
   let timer: number | undefined;
   const tilt = [-4, 2.5, -1.5, 3.5, -3];
@@ -78,8 +82,32 @@ const lines = [
   const reel = document.querySelector('.reel');
   reel?.addEventListener('mouseenter', stop);
   reel?.addEventListener('mouseleave', start);
-  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
   start();
+
+  // Turn the name over like a sheet of paper: English on one side, Nepali on the other.
+  const name = document.querySelector<HTMLElement>('.hero .name');
+  const words = Array.from(name?.querySelectorAll<HTMLElement>('.word') ?? []);
+  let angle = 0;
+  let flipTimer: number | undefined;
+  const flip = () => {
+    angle -= 180;
+    words.forEach((w, k) => {
+      w.style.transitionDelay = `${k * 140}ms`;
+      w.style.animationDelay = `${k * 140}ms`;
+      w.classList.remove('flipping');
+      void w.offsetWidth;
+      w.classList.add('flipping');
+      w.style.setProperty('--angle', `${angle}deg`);
+    });
+  };
+  const auto = () => { if (!reduce.matches) flipTimer = window.setInterval(flip, 4200); };
+  name?.addEventListener('click', () => { window.clearInterval(flipTimer); flip(); auto(); });
+  window.setTimeout(() => { if (!reduce.matches) { flip(); auto(); } }, 2600);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { stop(); window.clearInterval(flipTimer); }
+    else { start(); auto(); }
+  });
 </script>
 
 <style>
@@ -94,25 +122,16 @@ const lines = [
   }
   .hero-flags {
     position: absolute;
-    top: 64px;
+    top: 60px;
     left: -2%;
     width: 104%;
     opacity: 0.55;
     animation: fade 1.6s var(--ease) both;
   }
+  .fl-m { display: none; }
+  .hub { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; animation: fade 1.4s ease 0.6s both; }
 
-  .constellation { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .constellation line {
-    stroke: var(--chalk-2);
-    stroke-width: 0.8;
-    vector-effect: non-scaling-stroke;
-    stroke-dasharray: 3 7;
-    animation: fade 1.2s var(--ease) both;
-    animation-delay: calc(700ms + var(--i) * 90ms);
-  }
-  .constellation circle { fill: var(--chalk); }
-
-  .d { position: absolute; color: var(--chalk); animation: arrive 1.2s var(--ease) both; }
+  .d { position: absolute; color: var(--chalk); animation: arrive 1.2s var(--ease) both; will-change: translate; }
   .d > :global(svg) { width: 100%; height: auto; animation: drift 9s ease-in-out infinite alternate; }
   .d-biplane { top: 27%; right: 4%; width: clamp(140px, 16vw, 230px); animation-delay: 200ms; }
   .d-biplane > :global(svg) { animation-duration: 7s; }
@@ -121,19 +140,20 @@ const lines = [
   .d-book { bottom: 11%; right: 7%; width: clamp(90px, 10vw, 150px); animation-delay: 350ms; }
   .d-dial { top: 31%; left: 5%; width: clamp(54px, 6vw, 84px); animation-delay: 450ms; }
   .d-plane { top: 52%; right: 2.5%; width: clamp(50px, 5vw, 76px); animation-delay: 550ms; }
-  .d-star { width: 12px; translate: -50% -50%; animation-delay: calc(500ms + var(--i) * 80ms); }
+  .d-star { width: 12px; margin: -6px 0 0 -6px; animation-delay: calc(500ms + var(--i) * 80ms); }
   .d-star > :global(svg) { animation: twinkle 3.5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -0.6s); }
 
   .hero-inner {
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: minmax(220px, 300px) minmax(0, 620px);
+    grid-template-columns: minmax(220px, 300px) minmax(0, 640px);
     gap: clamp(2rem, 5vw, 4.5rem);
     align-items: center;
     justify-content: center;
   }
 
+  .reel-wrap { will-change: translate; }
   .reel {
     margin: 0;
     position: relative;
@@ -149,17 +169,57 @@ const lines = [
     visibility: hidden;
     transform: rotate(var(--tilt, -4deg));
   }
-  .frame.is-on { visibility: visible; animation: cut 260ms steps(2, end); }
+  .frame.is-on { visibility: visible; animation: cut 260ms steps(2, end), var(--boil); }
+  .frame:not(.is-on) :global(.ink) { animation: none; filter: none; }
   .frame :global(.frame-art) { width: 72%; height: 100%; max-height: 220px; margin: auto; color: var(--ink); }
   .frame figcaption { font-size: var(--s-21); line-height: 1.25; color: var(--ink); }
 
+  /* The name, printed on both sides of the sheet. */
   .name {
     font-size: clamp(4.75rem, 12vw, 10.5rem);
     color: var(--paper);
     display: flex;
     flex-direction: column;
+    perspective: 1100px;
+    cursor: pointer;
+    user-select: none;
     animation: echo 1300ms var(--ease) 150ms both;
   }
+  .word {
+    display: grid;
+    justify-items: start;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--angle, 0deg));
+    transform-origin: 50% 55%;
+    transition: transform 1.05s cubic-bezier(0.62, -0.28, 0.32, 1.32);
+  }
+  .face {
+    grid-area: 1 / 1;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    line-height: 0.86;
+  }
+  .face.ne {
+    transform: rotateX(180deg);
+    font-family: var(--deva);
+    font-weight: 600;
+    font-size: 0.98em;
+    line-height: 0.8;
+    padding-top: 0.08em;
+  }
+  /* Mid-turn the sheet bows and catches the light, like paper does. */
+  .word.flipping { animation: paper-turn 1.05s cubic-bezier(0.62, -0.28, 0.32, 1.32) both; }
+  .word.flipping .face { animation: paper-light 1.05s ease both; animation-delay: inherit; }
+  @keyframes paper-turn {
+    0% { scale: 1; }
+    45% { scale: 1.04 0.96; }
+    100% { scale: 1; }
+  }
+  @keyframes paper-light {
+    0%, 100% { color: var(--paper); text-shadow: 0 0 0 rgb(0 0 0 / 0); }
+    45% { color: #fffaf0; text-shadow: 0 0.12em 0.08em rgb(0 0 0 / 0.55); }
+  }
+
   .entry {
     margin-top: 1.4rem;
     max-width: 52ch;
@@ -199,10 +259,15 @@ const lines = [
     .hero { padding-block: 8.5rem 6rem; place-items: start center; }
     .hero-inner { grid-template-columns: 1fr; justify-items: start; gap: 2.5rem; }
     .intro { order: -1; }
-    .reel { width: min(260px, 70vw); justify-self: center; }
-    .d-dial, .d-plane, .d-book, .d-biplane { display: none; }
+    .reel-wrap { width: min(260px, 70vw); justify-self: center; }
+    .d-dial, .d-plane, .d-book, .d-biplane, .fl-d { display: none; }
+    .fl-m { display: block; }
+    .hero-flags { top: 66px; }
     .d-peaks { bottom: 3%; width: 240px; opacity: 0.6; }
-    .constellation, .d-star { display: none; }
+    .hub { opacity: 0.6; }
     .scroll-cue { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .word { transition: none; }
   }
 </style>

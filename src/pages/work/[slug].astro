@@ -27,10 +27,10 @@ const { Content } = await render(p);
     </header>
 
     {p.data.results.length > 0 && (
-      <aside class="results torn" aria-label="Results">
+      <aside class="results-wrap paper-shadow" aria-label="Results"><div class="results torn">
         <p class="hand">What changed</p>
         <ul>{p.data.results.map((r) => <li>{r}</li>)}</ul>
-      </aside>
+      </div></aside>
     )}
 
     <div class="prose">
@@ -58,7 +58,8 @@ const { Content } = await render(p);
   .meta dt { color: var(--paper-dim); }
   .meta dd { margin: 0; }
 
-  .results { padding: 1.8rem 2rem 1.5rem; margin: 0 0 3rem; transform: rotate(-0.6deg); }
+  .results-wrap { display: block; margin: 0 0 3rem; transform: rotate(-0.6deg); }
+  .results { padding: 1.8rem 2rem 1.5rem; }
   .results .hand { margin: 0 0 0.4rem; font-size: var(--s-21); }
   .results ul { margin: 0; padding-left: 1.2rem; }
   .results li { font-size: var(--s-18); }

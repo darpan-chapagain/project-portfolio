@@ -22,23 +22,25 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   <PlayRing />
 
   <section class="section principles wrap" aria-labelledby="how">
-    <div class="section-head">
+    <div class="section-head" data-speed="-0.04">
       <h2 id="how" class="display">How I build</h2>
       <p>Four rules I picked up the hard way, each from a system that had to work the first time.</p>
     </div>
-    <ul class="scraps">
+    <ul class="scraps" data-reveal>
       {principles.map((pr, i) => (
-        <li class="scrap torn" style={`--r:${[-1.6, 1.2, 0.8, -1][i]}deg`}>
-          <h3 class="display">{pr.title}</h3>
-          <p>{pr.body}</p>
-          <a href={`/work/${pr.project}/`}>Learned on: {titleOf(pr.project)}</a>
+        <li class="scrap-wrap paper-shadow" style={`--r:${[-1.6, 1.2, 0.8, -1][i]}deg;--i:${i}`} data-speed={[0.04, -0.03, -0.02, 0.05][i]}>
+          <div class="scrap torn">
+            <h3 class="display">{pr.title}</h3>
+            <p>{pr.body}</p>
+            <a href={`/work/${pr.project}/`}>Learned on: {titleOf(pr.project)}</a>
+          </div>
         </li>
       ))}
     </ul>
   </section>
 
   <section id="experience" class="section wrap" aria-labelledby="exp">
-    <div class="section-head">
+    <div class="section-head" data-speed="-0.04">
       <h2 id="exp" class="display">Experience</h2>
       <p>Four years in software: e-commerce SaaS for a US client, then banking and fintech in Kathmandu.</p>
     </div>
@@ -59,7 +61,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
 
   <section id="work" class="section work" aria-labelledby="work-title">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head" data-speed="-0.04">
         <h2 id="work-title" class="display">Selected work</h2>
         <p>Pick a frame to read how it was built. Professional work is described at the architecture level, with no client code.</p>
       </div>
@@ -71,13 +73,13 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   </section>
 
   <section class="section wrap kit" aria-labelledby="kit-title">
-    <div class="section-head">
+    <div class="section-head" data-speed="-0.04">
       <h2 id="kit-title" class="display">Toolkit</h2>
       <p>What I reach for, from the backlog to the database.</p>
     </div>
-    <ul class="notes-wall">
+    <ul class="notes-wall" data-reveal>
       {toolkit.map((t, i) => (
-        <li class="postit hand" style={`--r:${[-3, 2, -1.5, 3, -2.5, 1.5][i % 6]}deg`}>
+        <li class="postit hand" style={`--r:${[-3, 2, -1.5, 3, -2.5, 1.5][i % 6]}deg;--i:${i}`} data-speed={[0.03, -0.02, 0.05, -0.04, 0.02, -0.03][i % 6]}>
           <strong>{t.heading}</strong>
           <span>{t.items}</span>
         </li>
@@ -105,7 +107,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   </section>
 
   <section class="section wrap reading" aria-labelledby="reading-title">
-    <div class="section-head">
+    <div class="section-head" data-speed="-0.04">
       <h2 id="reading-title" class="display">Reading pile</h2>
       <p>Book reviews and notes on building software.</p>
     </div>
@@ -120,7 +122,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
       </ul>
     ) : (
       <div class="empty">
-        <Doodle name="book" class="empty-art" />
+        <div data-speed="-0.06" data-depth="0.4"><Doodle name="book" class="empty-art" /></div>
         <p>The first review is still being written. In the meantime, <a href={person.linkedin}>follow me on LinkedIn</a> and you'll see it when it lands.</p>
       </div>
     )}
@@ -130,22 +132,53 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     <div class="wrap contact-inner">
       <h2 id="contact-title" class="display start echo">Press start</h2>
       <div class="contact-body">
-        <p class="lede">Hiring for technical product, program or AI roles? Want to talk fintech, or trade book recommendations? Email is fastest.</p>
+        <p class="lede">Hiring a product manager, especially in fintech? Want to talk payments and banking, or trade book recommendations? Email is fastest.</p>
         <a class="email" href={`mailto:${person.email}`}>{person.email}</a>
         <p class="links"><a href={person.linkedin}>LinkedIn</a> <a href={person.github}>GitHub</a></p>
       </div>
-      <p class="postit hand contact-note" style="--r:4deg">Based in Dayton, Ohio. From Kathmandu. Looking at technical PM, software and AI roles in fintech.</p>
+      <p class="postit hand contact-note" style="--r:4deg" data-speed="-0.08">Based in Fairborn, Ohio. From Kathmandu. Looking for product management roles, ideally in fintech. Open to other good problems too.</p>
     </div>
   </section>
 </Base>
 
 <style>
-  /* How I build */
-  .scraps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.25rem, 3vw, 2.25rem); }
-  .scrap { padding: 2.2rem 2rem 1.8rem; transform: rotate(var(--r)); }
+  /* How I build: scraps of paper taped up one by one, then they never quite sit still. */
+  .scraps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.75rem, 3.5vw, 2.75rem); }
+  .scrap-wrap { position: relative; transform: rotate(var(--r)); will-change: translate; }
+  .scrap-wrap::before {
+    /* masking tape */
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    width: 110px;
+    height: 30px;
+    translate: -50% 0;
+    rotate: calc(var(--r) * -2.4);
+    background: rgb(226 219 196 / 0.72);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+    clip-path: polygon(2% 8%, 98% 0, 100% 92%, 0 100%);
+    z-index: 2;
+  }
+  .scrap { padding: 2.4rem 2rem 1.8rem; height: 100%; }
   .scrap h3 { font-size: clamp(2rem, 3.4vw, 2.75rem); margin-bottom: 0.7rem; }
   .scrap p { margin: 0 0 1rem; font-size: var(--s-16); max-width: 46ch; }
   .scrap a { font-size: var(--s-14); color: #4d483f; }
+
+  .js .scraps:not(.is-in) .scrap-wrap { opacity: 0; }
+  .scraps.is-in .scrap-wrap { animation: tape-up 1.15s cubic-bezier(0.34, 1.5, 0.64, 1) backwards; animation-delay: calc(var(--i) * 150ms); }
+  @keyframes tape-up {
+    0% { opacity: 0; transform: translateY(-80px) rotate(calc(var(--r) - 12deg)) scale(1.06); }
+    40% { opacity: 1; }
+    100% { opacity: 1; transform: rotate(var(--r)); }
+  }
+  .scrap-wrap:hover .scrap { animation: var(--boil), flutter 0.75s ease-in-out; }
+  @keyframes flutter {
+    0%, 100% { transform: none; }
+    20% { transform: rotate(2.2deg) translateY(-4px); }
+    45% { transform: rotate(-1.6deg) translateY(-7px); }
+    70% { transform: rotate(0.8deg) translateY(-3px); }
+  }
 
   /* Experience */
   .roles { list-style: none; margin: 0; padding: 0; }
@@ -173,13 +206,36 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .notes-wall { list-style: none; margin: 0 0 4.5rem; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8rem 2.2rem; max-width: 960px; }
   @media (max-width: 760px) { .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; } }
   .postit {
+    position: relative;
     background: var(--postit);
     color: var(--postit-ink);
     padding: 1.1rem 1.1rem 1.4rem;
     transform: rotate(var(--r, -2deg));
+    transform-origin: 50% 0;
     box-shadow: 0 14px 18px -12px rgb(0 0 0 / 0.6);
     font-size: var(--s-18);
     line-height: 1.35;
+    transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 380ms ease;
+    will-change: translate;
+  }
+  /* the bottom corner lifts a little, like a real sticky note */
+  .postit::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, rgb(0 0 0 / 0) 50%, rgb(0 0 0 / 0.12) 50%, rgb(255 255 255 / 0.25) 100%);
+    transition: width 380ms ease, height 380ms ease;
+  }
+  .postit:hover { transform: rotate(calc(var(--r, -2deg) * -0.6)) translateY(-6px) scale(1.03); box-shadow: 0 26px 26px -16px rgb(0 0 0 / 0.7); }
+  .postit:hover::after { width: 34px; height: 34px; }
+  .js .notes-wall:not(.is-in) .postit { opacity: 0; }
+  .notes-wall.is-in .postit { animation: stick 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; animation-delay: calc(var(--i) * 90ms); }
+  @keyframes stick {
+    0% { opacity: 0; transform: rotate(calc(var(--r, -2deg) * 3)) translateY(-24px) scale(1.12); box-shadow: 0 40px 30px -16px rgb(0 0 0 / 0.5); }
+    100% { opacity: 1; transform: rotate(var(--r, -2deg)); }
   }
   .postit strong { display: block; font-weight: 700; font-size: var(--s-21); margin-bottom: 0.3rem; }
   .edu { display: grid; grid-template-columns: 3fr 2fr; gap: 3rem; }

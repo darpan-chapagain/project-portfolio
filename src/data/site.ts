@@ -9,7 +9,9 @@ export const person = {
   email: 'darpanchapagain8@gmail.com',
   linkedin: 'https://www.linkedin.com/in/darpan-chapagain-8h28',
   github: 'https://github.com/darpan-chapagain',
-  location: 'Dayton, Ohio',
+  location: 'Fairborn, Ohio',
+  school: 'Wright State University',
+  nepaliFull: ['दर्पण', 'चापागाईं'],
   hometown: 'Kathmandu, Nepal',
   description:
     'Technical product manager with four years in software and fintech, now an M.S. Computer Science student at Wright State University.',
@@ -59,7 +61,7 @@ export const education = [
   {
     degree: 'M.S. Computer Science',
     school: 'Wright State University',
-    place: 'Dayton, Ohio',
+    place: 'Fairborn, Ohio',
     when: 'Expected December 2027',
     detail: '',
   },
@@ -117,7 +119,7 @@ export const heroFrames = [
   { art: 'stupa', caption: 'Kathmandu. Where it started.' },
   { art: 'laptop', caption: 'Remote for a US client. PHP dev to team lead.' },
   { art: 'vault', caption: 'Banking and fintech, back in Kathmandu.' },
-  { art: 'biplane', caption: 'Dayton, Ohio. Home of flight, and my M.S.' },
+  { art: 'biplane', caption: 'Fairborn, Ohio. M.S. at Wright State.' },
   { art: 'book', caption: 'Reading more. Reviews coming soon.' },
 ];
 
@@ -197,17 +199,17 @@ export const levels: Level[] = [
   },
   {
     n: 6,
-    place: 'Kathmandu to Dayton',
+    place: 'Kathmandu to Ohio',
     when: '2025',
     title: 'The flight',
     art: 'biplane',
     story: [
-      'Moved to Dayton, Ohio, the hometown of the Wright brothers, for an M.S. in Computer Science at the university named after them.',
+      'Moved to Fairborn, Ohio, for an M.S. in Computer Science at Wright State University, named after the Wright brothers from neighbouring Dayton.',
     ],
   },
   {
     n: 7,
-    place: 'Dayton, Ohio',
+    place: 'Fairborn, Ohio',
     when: 'Now',
     title: 'Wright State University',
     art: 'peaks',
@@ -223,5 +225,5 @@ export const levels: Level[] = [
 export const nextLevel = {
   title: 'Next level',
   story:
-    'Technical product and AI roles in fintech. Longer term, AI systems for financial inclusion, starting with alternative credit scoring.',
+    'Product management, ideally in fintech, though a good problem anywhere will do. Longer term, AI systems for financial inclusion, starting with alternative credit scoring.',
 };
