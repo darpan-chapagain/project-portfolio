@@ -34,14 +34,12 @@ const nav = [
     <meta property="og:url" content={canonical} />
     <meta name="twitter:card" content="summary" />
     <script is:inline>
-      // Pick the theme before anything paints: a saved choice first, otherwise light,
-      // unless the visitor's device is set to dark.
-      // A theme passed in the link wins (it carries a choice between pages when storage is blocked),
-      // then a saved choice, then the tab's name.
+      // Pick the theme before anything paints.
+      // A saved choice wins, then the tab's name (private modes that block storage),
+      // then the device setting: light unless the device is dark.
       (function () {
         var d = document.documentElement, t;
-        try { t = new URLSearchParams(location.search).get('theme'); } catch (e) {}
-        if (t !== 'light' && t !== 'dark') { try { t = localStorage.getItem('theme'); } catch (e) {} }
+        try { t = localStorage.getItem('theme'); } catch (e) {}
         if (t !== 'light' && t !== 'dark') { var m = /(?:^|;)theme=(light|dark)/.exec(window.name || ''); if (m) t = m[1]; }
         if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         d.dataset.theme = t;
