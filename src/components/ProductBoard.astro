@@ -1,0 +1,229 @@
+---
+// "How I build" as a product board drawn on a whiteboard: Listen, Decide, Build, Ship.
+// Every card is a rule from a real project and links to it.
+import { getCollection } from 'astro:content';
+import { board } from '../data/site';
+
+const projects = await getCollection('projects');
+const shortOf = (id: string) => projects.find((p) => p.id === id)?.data.short ?? id;
+
+const tilt = [-0.9, 0.7, -0.4, 1, -0.6, 0.5, -1.1, 0.8, -0.3, 0.6, -0.8, 0.4, -0.5];
+let k = 0;
+const columns = board.map((col, c) => ({
+  ...col,
+  cards: col.cards.map((card, row) => {
+    const i = k++;
+    return {
+      ...card,
+      href: card.href ?? `/work/${card.project}/`,
+      label: card.label ?? shortOf(card.project ?? ''),
+      style: `--r:${tilt[i % tilt.length]}deg;--d:${520 + c * 150 + row * 120}ms`,
+    };
+  }),
+}));
+---
+<div class="board" data-reveal>
+  <p class="swipe hand" aria-hidden="true">swipe the board</p>
+  <div class="cols">
+    {columns.map((col, c) => (
+      <section class="col" style={`--c:${c}`} aria-labelledby={`col-${c}`}>
+        <svg class="divider" viewBox="0 0 10 400" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M5 0 C3 70 7 130 5 200 C3 270 7 330 4 400" />
+        </svg>
+        <header class="col-head">
+          <h3 id={`col-${c}`} class="col-name hand">
+            {col.column}
+            <span class="count">
+              <span class="sr-only">, {col.cards.length} cards</span>
+              <span aria-hidden="true">{col.cards.length}</span>
+              <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M30 8 C20 2 6 8 5 20 C4 32 16 38 26 35 C36 32 38 18 32 10 C29 6 24 5 19 6" /></svg>
+            </span>
+          </h3>
+          <p class="col-hint hand">{col.hint}</p>
+          <svg class="underline" viewBox="0 0 200 10" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M2 6 C40 3 80 8 120 5 C150 3 180 7 198 4" />
+          </svg>
+        </header>
+        <ol class="cards">
+          {col.cards.map((card) => (
+            <li class="ticket" style={card.style}>
+              <div class="card">
+                <span class="magnet" aria-hidden="true"></span>
+                <p class="from hand">{card.from}</p>
+                <h4 class="t-title display"><a class="stretch" href={card.href}>{card.title}</a></h4>
+                <p class="t-body">{card.body}</p>
+                <p class="t-metric hand"><span>{card.metric}</span></p>
+                <p class="t-link">Learned on <span>{card.label}</span></p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))}
+  </div>
+  <div class="tray" aria-hidden="true">
+    <svg class="marker" viewBox="0 0 120 20">
+      <path class="m-body" d="M14 4 H86 Q92 4 92 10 Q92 16 86 16 H14 Q8 16 8 10 Q8 4 14 4 Z" />
+      <path class="m-cap" d="M86 3.5 H108 Q114 3.5 114 10 Q114 16.5 108 16.5 H86 Z" />
+      <path class="m-line" d="M24 10 H70" />
+    </svg>
+  </div>
+</div>
+
+<style>
+  .board {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: clamp(1.25rem, 2.5vw, 2rem) clamp(0.75rem, 1.6vw, 1.25rem) clamp(1.75rem, 3vw, 2.5rem);
+    background: var(--ink-2);
+    border: 1.5px solid rgb(var(--chalk-rgb) / 0.22);
+    border-radius: 10px;
+  }
+  .cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .col { position: relative; padding-inline: clamp(0.6rem, 1.3vw, 1.1rem); min-width: 0; }
+
+  /* Marker lines between columns. */
+  .divider { position: absolute; left: -5px; top: 0.2rem; bottom: 0; width: 10px; height: calc(100% - 0.2rem); overflow: visible; }
+  .divider path, .underline path, .count path {
+    fill: none;
+    stroke: rgb(var(--chalk-rgb) / 0.42);
+    stroke-width: 2;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .col:first-child .divider { display: none; }
+
+  .col-head { position: relative; padding-bottom: 0.9rem; }
+  .col-name { display: flex; align-items: center; gap: 0.55rem; margin: 0; font-size: clamp(1.5rem, 2.2vw, 1.85rem); font-weight: 700; line-height: 1.1; color: var(--paper); }
+  .count { position: relative; display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; font-size: 0.62em; font-weight: 400; }
+  .count svg { position: absolute; inset: -3px; width: calc(100% + 6px); height: calc(100% + 6px); overflow: visible; }
+  .col-hint { margin: 0.1rem 0 0; font-size: var(--s-16); color: var(--paper-dim); }
+  .underline { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 10px; overflow: visible; }
+
+  .cards { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; gap: 1.4rem; }
+  .ticket { transform: rotate(var(--r)); }
+
+  /* An index card held up by one magnet. */
+  .card {
+    position: relative;
+    padding: 1.15rem 1rem 0.95rem;
+    background: var(--card);
+    color: var(--card-ink);
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.06), 0 10px 16px -8px var(--shadow);
+    transform-origin: 50% 4px;
+    transition: box-shadow 300ms var(--ease);
+  }
+  .magnet {
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    width: 15px;
+    height: 15px;
+    translate: -50% 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 32%, #fbf1b8, #ecd96f 52%, #a8962f);
+    box-shadow: 0 2px 3px rgb(0 0 0 / 0.35);
+  }
+  .from { margin: 0 0 0.3rem; font-size: var(--s-14); color: rgb(var(--card-ink-rgb) / 0.62); }
+  .t-title { margin: 0 0 0.55rem; font-size: clamp(1.55rem, 2.1vw, 1.8rem); line-height: 0.95; }
+  .t-title a { color: inherit; text-decoration: none; }
+  .t-title a:focus-visible { outline: none; }
+  /* The whole card is the link. */
+  .stretch::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+  .t-body { margin: 0 0 0.7rem; font-size: 0.9rem; line-height: 1.45; }
+  .t-metric { margin: 0 0 0.6rem; font-size: 1.05rem; line-height: 1.3; }
+  .t-metric span {
+    padding: 0 0.15em;
+    background: linear-gradient(transparent 52%, rgb(236 217 111 / 0.85) 52%, rgb(236 217 111 / 0.85) 92%, transparent 92%) no-repeat 0 0 / 100% 100%;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .t-link { margin: 0; font-size: 0.78rem; color: rgb(var(--card-ink-rgb) / 0.62); }
+  .t-link span { color: var(--card-ink); border-bottom: 1px dashed rgb(var(--card-ink-rgb) / 0.45); }
+
+  .ticket:hover .card { box-shadow: 0 1px 0 rgb(0 0 0 / 0.06), 0 18px 26px -10px var(--shadow-soft); }
+  .ticket:hover .t-link span { border-bottom-style: solid; border-bottom-color: var(--card-ink); }
+  .ticket:has(a:focus-visible) .card { outline: 2px solid var(--paper); outline-offset: 4px; }
+
+  /* The marker tray along the bottom edge. */
+  .tray {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: -13px;
+    height: 13px;
+    background: var(--ink-2);
+    border: 1.5px solid rgb(var(--chalk-rgb) / 0.22);
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+  }
+  .marker { position: absolute; right: 12%; bottom: 9px; width: 92px; rotate: -2deg; overflow: visible; }
+  .m-body { fill: var(--card); stroke: rgb(var(--chalk-rgb) / 0.55); stroke-width: 1.2; }
+  .m-cap { fill: #2f2b24; }
+  .m-line { stroke: rgb(var(--card-ink-rgb) / 0.35); stroke-width: 1.4; stroke-linecap: round; }
+
+  .swipe { display: none; }
+
+  /* The board draws itself, then the cards go up one by one. */
+  .js .board:not(.is-in) :is(.divider, .underline, .count svg) { clip-path: inset(0 100% 100% 0); }
+  .js .board:not(.is-in) :is(.col-name, .col-hint, .ticket) { opacity: 0; }
+  .board.is-in .divider { animation: draw-down 900ms var(--ease) backwards; animation-delay: calc(var(--c) * 120ms); }
+  .board.is-in .underline { animation: draw-across 650ms var(--ease) backwards; animation-delay: calc(var(--c) * 150ms + 150ms); }
+  .board.is-in .count svg { animation: draw-across 500ms var(--ease) backwards; animation-delay: calc(var(--c) * 150ms + 380ms); }
+  .board.is-in :is(.col-name, .col-hint) { animation: ink-in 500ms var(--ease) backwards; animation-delay: calc(var(--c) * 150ms + 100ms); }
+  .board.is-in .ticket { animation: put-up 900ms cubic-bezier(0.3, 1.45, 0.55, 1) backwards; animation-delay: var(--d); }
+  .board.is-in .t-metric span { animation: highlight 600ms var(--ease) backwards; animation-delay: calc(var(--d) + 650ms); }
+  .ticket:hover .card { animation: swing 1.2s ease-out; }
+
+  @keyframes draw-down { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes draw-across { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes ink-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes put-up {
+    0% { opacity: 0; transform: translateY(-26px) rotate(calc(var(--r) - 7deg)); }
+    35% { opacity: 1; }
+    100% { opacity: 1; transform: rotate(var(--r)); }
+  }
+  @keyframes highlight { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+  @keyframes swing {
+    0%, 100% { transform: none; }
+    18% { transform: rotate(2.4deg); }
+    40% { transform: rotate(-1.7deg); }
+    62% { transform: rotate(0.9deg); }
+    82% { transform: rotate(-0.35deg); }
+  }
+
+  /* Two columns per row on tablets. */
+  @media (max-width: 1040px) {
+    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 2.75rem; }
+    .col:nth-child(odd) .divider { display: none; }
+  }
+
+  /* Phones: swipe across the board like a real one. */
+  @media (max-width: 680px) {
+    .board { padding-inline: 0; padding-top: 1rem; }
+    .swipe { display: block; margin: 0 0 0.9rem 1.1rem; font-size: var(--s-16); color: var(--paper-dim); }
+    .cols {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: 82%;
+      row-gap: 0;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 1rem;
+      padding: 0.6rem 1rem 1.2rem;
+      scrollbar-width: thin;
+    }
+    .col { scroll-snap-align: start; padding-inline: 0.9rem; }
+    .col:nth-child(odd) .divider { display: block; }
+    .col:first-child .divider { display: none; }
+    .marker { width: 72px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .board *, .board { animation: none !important; }
+    .js .board:not(.is-in) :is(.divider, .underline, .count svg) { clip-path: none; }
+    .js .board:not(.is-in) :is(.col-name, .col-hint, .ticket) { opacity: 1; }
+  }
+</style>

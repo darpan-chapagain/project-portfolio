@@ -27,6 +27,7 @@ stack:
 company: "Proshore (Digital Product Labs)"
 art: "sync"
 group: "platforms"
+featured: true
 apps: [{"name":"DPL Etsy Integration","url":"https://apps.shopify.com/etsy-integration-dpl","art":"sync","blurb":"Two-way sync between Shopify and Etsy: listings, stock by SKU and location, and orders with tracking."},{"name":"DPL eBay Integration","url":"https://apps.shopify.com/ebay-integration-dpl","art":"card","blurb":"Connects a Shopify store to one or more eBay accounts, eBay Motors included, with stock and order sync."},{"name":"Faire: Import, Export, Fulfill","url":"https://apps.shopify.com/faire-integration-dpl","art":"coins","blurb":"Lets brands sell wholesale on Faire from Shopify, with products, stock, orders and tracking kept in step."},{"name":"Awin, CJ Product Feed","url":"https://apps.shopify.com/dpl-product-feed-inventory","art":"browser","blurb":"Publishes products to the Awin and CJ affiliate networks and refreshes the feeds every day."},{"name":"License Keys & Codes","url":"https://apps.shopify.com/dpl-selling-codes-keys","art":"key","blurb":"Sells game codes and license keys on Shopify, and delivers each one to the buyer right after payment."}]
 ---
 

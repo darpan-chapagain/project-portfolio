@@ -6,12 +6,12 @@ import PlayRing from '../components/PlayRing.astro';
 import ContactSheet from '../components/ContactSheet.astro';
 import Doodle from '../components/Doodle.astro';
 import Sky from '../components/Sky.astro';
-import { person, roles, education, certifications, toolkit, principles, clients, recognition } from '../data/site';
+import ProductBoard from '../components/ProductBoard.astro';
+import { person, roles, education, certifications, toolkit, clients, recognition } from '../data/site';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 const featured = projects.filter((p) => p.data.featured);
 const shortOf = (id: string) => projects.find((p) => p.id === id)?.data.short ?? '';
-const titleOf = (id: string) => projects.find((p) => p.id === id)?.data.title ?? '';
 
 const posts = (await getCollection('writing', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
@@ -22,22 +22,12 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   <Hero />
   <PlayRing />
 
-  <section class="section principles wrap" aria-labelledby="how">
+  <section class="section how wrap" aria-labelledby="how">
     <div class="section-head" data-speed="-0.04">
       <h2 id="how" class="display">How I build</h2>
-      <p>Four rules I picked up the hard way, each from a system that had to work the first time.</p>
+      <p>My working board. Every card is a rule I picked up on a real product. Open one to see where it came from.</p>
     </div>
-    <ul class="scraps" data-reveal>
-      {principles.map((pr, i) => (
-        <li class="scrap-wrap paper-shadow" style={`--r:${[-1.6, 1.2, 0.8, -1][i]}deg;--i:${i}`} data-speed={[0.04, -0.03, -0.02, 0.05][i]}>
-          <div class="scrap torn">
-            <h3 class="display">{pr.title}</h3>
-            <p>{pr.body}</p>
-            <a href={`/work/${pr.project}/`}>Learned on: {titleOf(pr.project)}</a>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <ProductBoard />
   </section>
 
   <section id="experience" class="section has-sky" aria-labelledby="exp">
@@ -51,7 +41,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     <div class="wrap">
     <div class="section-head" data-speed="-0.04">
       <h2 id="exp" class="display">Experience</h2>
-      <p>Four years in software. E-commerce SaaS for a US client first, then banking products for 16+ financial institutions in Kathmandu.</p>
+      <p>Four years in software. First, Shopify apps for Digital Product Labs, a US client. Five are still live on the App Store. Then banking products for 16+ financial institutions in Kathmandu.</p>
     </div>
     <ol class="roles" data-reveal>
       {roles.map((r, i) => (
@@ -214,44 +204,6 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
 </Base>
 
 <style>
-  /* How I build: scraps of paper taped up one by one, then they never quite sit still. */
-  .scraps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.75rem, 3.5vw, 2.75rem); }
-  .scrap-wrap { position: relative; transform: rotate(var(--r)); will-change: translate; }
-  .scrap-wrap::before {
-    /* masking tape */
-    content: '';
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    width: 110px;
-    height: 30px;
-    translate: -50% 0;
-    rotate: calc(var(--r) * -2.4);
-    background: var(--tape);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
-    clip-path: polygon(2% 8%, 98% 0, 100% 92%, 0 100%);
-    z-index: 2;
-  }
-  .scrap { padding: 2.4rem 2rem 1.8rem; height: 100%; }
-  .scrap h3 { font-size: clamp(2rem, 3.4vw, 2.75rem); margin-bottom: 0.7rem; }
-  .scrap p { margin: 0 0 1rem; font-size: var(--s-16); max-width: 46ch; }
-  .scrap a { font-size: var(--s-14); color: rgb(var(--card-ink-rgb) / 0.72); }
-
-  .js .scraps:not(.is-in) .scrap-wrap { opacity: 0; }
-  .scraps.is-in .scrap-wrap { animation: tape-up 1.15s cubic-bezier(0.34, 1.5, 0.64, 1) backwards; animation-delay: calc(var(--i) * 150ms); }
-  @keyframes tape-up {
-    0% { opacity: 0; transform: translateY(-80px) rotate(calc(var(--r) - 12deg)) scale(1.06); }
-    40% { opacity: 1; }
-    100% { opacity: 1; transform: rotate(var(--r)); }
-  }
-  .scrap-wrap:hover .scrap { animation: var(--boil), flutter 0.75s ease-in-out; }
-  @keyframes flutter {
-    0%, 100% { transform: none; }
-    20% { transform: rotate(2.2deg) translateY(-4px); }
-    45% { transform: rotate(-1.6deg) translateY(-7px); }
-    70% { transform: rotate(0.8deg) translateY(-3px); }
-  }
-
   /* Experience */
   .roles { list-style: none; margin: 0; padding: 0; }
   .role {
@@ -430,7 +382,6 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .contact-note { max-width: 260px; justify-self: end; margin: 0; }
 
   @media (max-width: 760px) {
-    .scraps { grid-template-columns: 1fr; }
     .role { grid-template-columns: 1fr; gap: 0.3rem; }
     .stubs { grid-template-columns: 1fr; }
     .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }

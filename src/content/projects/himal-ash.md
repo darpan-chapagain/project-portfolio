@@ -19,7 +19,6 @@ stack:
 company: "Personal project"
 art: "sword"
 group: "games"
-featured: true
 repo: "https://github.com/darpan-chapagain/himal-ash"
 ---
 

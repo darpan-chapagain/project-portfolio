@@ -15,7 +15,7 @@ const title = (id: string) => projects.find((p) => p.id === id)?.data.title ?? i
 
   <ol class="wrap board">
     {levels.map((l, i) => (
-      <li class="panel" style={`--r:${i % 2 ? 0.6 : -0.6}deg`}>
+      <li class="panel" id={`level-${l.n}`} style={`--r:${i % 2 ? 0.6 : -0.6}deg`}>
         <div class="shot" data-speed={i % 2 ? -0.04 : 0.04}>
           <span class="lvl display">Level {l.n}</span>
           <Doodle name={l.art} class="shot-art" />
@@ -59,6 +59,7 @@ const title = (id: string) => projects.find((p) => p.id === id)?.data.title ?? i
 
   .board { list-style: none; padding-bottom: 6rem; margin-top: 0; display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }
   .panel {
+    scroll-margin-top: 88px;
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
     gap: clamp(1.5rem, 4vw, 3.5rem);

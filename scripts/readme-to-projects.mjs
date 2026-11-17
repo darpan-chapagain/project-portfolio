@@ -46,7 +46,7 @@ const meta = {
   'banking-microsite-and-content-management-platform': { company: 'AMNIL Technologies', client: 'Nabil Bank', art: 'browser', group: 'fintech' },
   'large-scale-banking-data-migration-and-validation': { company: 'F1Soft International', art: 'database', group: 'fintech', featured: true },
   'e-commerce-marketplace-integration-and-synchronization-platform': {
-    company: 'Proshore (Digital Product Labs)', art: 'sync', group: 'platforms',
+    company: 'Proshore (Digital Product Labs)', art: 'sync', group: 'platforms', featured: true,
     apps: [
       { name: 'DPL Etsy Integration', url: 'https://apps.shopify.com/etsy-integration-dpl', art: 'sync', blurb: 'Two-way sync between Shopify and Etsy: listings, stock by SKU and location, and orders with tracking.' },
       { name: 'DPL eBay Integration', url: 'https://apps.shopify.com/ebay-integration-dpl', art: 'card', blurb: 'Connects a Shopify store to one or more eBay accounts, eBay Motors included, with stock and order sync.' },
@@ -57,7 +57,7 @@ const meta = {
   },
   'learning-management-and-job-matching-platform': { art: 'cap', group: 'platforms' },
   'fittracker': { company: 'Personal project', art: 'dumbbell', group: 'ai', featured: true },
-  'himal-ash': { company: 'Personal project', art: 'sword', group: 'games', featured: true, repo: 'https://github.com/darpan-chapagain/himal-ash' },
+  'himal-ash': { company: 'Personal project', art: 'sword', group: 'games', repo: 'https://github.com/darpan-chapagain/himal-ash' },
   'real-time-pose-analysis-and-exercise-quality-tracking-system': { art: 'pose', group: 'ai' },
   'high-performance-route-optimization': { art: 'route', group: 'games' },
 };

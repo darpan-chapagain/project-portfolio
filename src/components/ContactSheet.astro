@@ -11,6 +11,7 @@ const { items, label } = Astro.props;
         <Doodle name={p.data.art} class="print-art" />
         <span class="domain">{p.data.domain}</span>
         <span class="title display">{p.data.short}</span>
+        {p.data.apps.length > 0 && <span class="live hand">{p.data.apps.length} apps live on Shopify</span>}
         {p.data.results[0] && <span class="result">{p.data.results[0]}</span>}
         <span class="role">{p.data.role}</span>
         <svg class="pick" viewBox="0 0 200 140" preserveAspectRatio="none" aria-hidden="true">
@@ -67,6 +68,7 @@ const { items, label } = Astro.props;
   .print :global(.print-art) { position: absolute; top: 0.9rem; right: 0.9rem; width: 44px; color: var(--card-ink); opacity: 0.85; transition: transform 400ms var(--ease); }
   .print:hover :global(.print-art) { transform: rotate(-8deg) scale(1.1); }
   .title { font-size: clamp(2.2rem, 3vw, 2.75rem); line-height: 0.92; align-self: start; padding-right: 44px; }
+  .live { justify-self: start; font-size: var(--s-16); line-height: 1.2; padding: 0 0.2em; background: linear-gradient(transparent 50%, rgb(236 217 111 / 0.85) 50%, rgb(236 217 111 / 0.85) 92%, transparent 92%); }
   .result { font-style: italic; font-size: var(--s-16); line-height: 1.4; }
   .role { font-size: var(--s-14); color: #5b564c; border-top: 1px solid rgb(var(--card-ink-rgb) / 0.18); padding-top: 0.5rem; }
 

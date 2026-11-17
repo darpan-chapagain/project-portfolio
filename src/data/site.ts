@@ -145,27 +145,134 @@ export const toolkit = [
   { heading: 'Languages', items: 'Nepali, English, Hindi' },
 ];
 
-// Lessons pulled straight from the project write-ups in README.md.
-export const principles = [
+// The "How I build" board. One card per project, every card links somewhere.
+// Facts come from the project write-ups in README.md and the master resume.
+export type BoardCard = {
+  from: string;
+  title: string;
+  body: string;
+  metric: string;
+  project?: string;
+  href?: string;
+  label?: string;
+};
+
+export const board: { column: string; hint: string; cards: BoardCard[] }[] = [
   {
-    title: 'No partial execution',
-    body: 'A payroll run posts in full or halts. Half a payroll is harder to fix than none, and the same goes for half-shipped features.',
-    project: 'automated-banking-payroll-processing-system',
+    column: 'Listen',
+    hint: 'what customers feel',
+    cards: [
+      {
+        from: 'DPL',
+        title: 'Start in the support queue',
+        body: 'My first job at Digital Product Labs was answering seller tickets on five Shopify apps that are still live. Replies went from 12 hours to 45 minutes.',
+        metric: '4.5 → 4.8 app rating',
+        project: 'e-commerce-marketplace-integration-and-synchronization-platform',
+      },
+      {
+        from: 'AMNIL',
+        title: 'Measure the wait',
+        body: 'Customers never see the compliance rules. They see how long it takes to open an account.',
+        metric: '3 days → under 1 hour',
+        project: 'digital-account-opening-and-compliance-automation-system',
+      },
+      {
+        from: 'AMNIL',
+        title: 'The website is the front door',
+        body: "For a lot of customers, the bank's website is the bank. We made Nabil Bank's microsite 70% faster.",
+        metric: '2.3x page retention',
+        project: 'banking-microsite-and-content-management-platform',
+      },
+    ],
   },
   {
-    title: 'Safe to retry',
-    body: 'Every state-changing request carries an idempotency key. A double click on a slow network should never open two bank accounts.',
-    project: 'digital-account-opening-and-compliance-automation-system',
+    column: 'Decide',
+    hint: 'what goes first',
+    cards: [
+      {
+        from: 'F1Soft',
+        title: 'Sixteen banks, one backlog',
+        body: 'Mobile and internet banking for 16 banks at once. Large-Scale Scrum put every team on one shared backlog.',
+        metric: '20% faster delivery',
+        href: '/journey/#level-3',
+        label: 'F1Soft, level 3 of my journey',
+      },
+      {
+        from: 'Hivelaya',
+        title: 'One profile, not four tools',
+        body: 'Learners were piecing together courses, certificates, resumes and job boards. We joined them into one skills profile.',
+        metric: 'thousands of learners in Nepal',
+        project: 'learning-management-and-job-matching-platform',
+      },
+      {
+        from: 'Independent',
+        title: 'Playable first, bigger later',
+        body: 'Get a slice someone can play, then grow it. New moves and enemies plug into one state machine.',
+        metric: '3 levels in about 2 weeks',
+        project: 'himal-ash',
+      },
+    ],
   },
   {
-    title: 'Revoke the way you grant',
-    body: 'Taking access away runs through the same audited path as giving it. The rare path deserves the same testing as the common one.',
-    project: 'enterprise-access-control-and-role-management-platform',
+    column: 'Build',
+    hint: 'so it holds',
+    cards: [
+      {
+        from: 'AMNIL',
+        title: 'No partial execution',
+        body: 'A payroll run posts in full or halts. Half a payroll is harder to fix than none.',
+        metric: '10,000+ employees a month',
+        project: 'automated-banking-payroll-processing-system',
+      },
+      {
+        from: 'AMNIL',
+        title: 'Revoke the way you grant',
+        body: 'Taking access away runs through the same audited approval path as giving it.',
+        metric: 'full audit trail',
+        project: 'enterprise-access-control-and-role-management-platform',
+      },
+      {
+        from: 'Independent',
+        title: 'The model reads. The data decides.',
+        body: 'The on-device LLM only parses what you ate. Every calorie comes from a verified database.',
+        metric: 'Gemma 2B, on the phone',
+        project: 'fittracker',
+      },
+      {
+        from: 'Independent',
+        title: 'Angles, not pixels',
+        body: 'Form feedback comes from joint angles, so it holds up at any camera distance.',
+        metric: 'real-time rep counting',
+        project: 'real-time-pose-analysis-and-exercise-quality-tracking-system',
+      },
+    ],
   },
   {
-    title: 'The model reads. The data decides.',
-    body: 'In FitTracker the on-device LLM only parses what you ate. Every calorie comes from a verified database, so there is nothing to hallucinate.',
-    project: 'fittracker',
+    column: 'Ship',
+    hint: 'and prove it',
+    cards: [
+      {
+        from: 'AMNIL',
+        title: 'Every message lands',
+        body: 'SMS and Viber alerts with provider failover. If one provider drops, the next picks up and customers never notice.',
+        metric: '99.5%+ delivery',
+        project: 'multi-channel-banking-notification-system',
+      },
+      {
+        from: 'F1Soft',
+        title: 'Move it once',
+        body: 'Check the data before, move it in verified batches, reconcile every count after. Nothing lost, nothing rolled back.',
+        metric: '100,000+ records',
+        project: 'large-scale-banking-data-migration-and-validation',
+      },
+      {
+        from: 'Independent',
+        title: 'Price it before you scale it',
+        body: 'The same route search ran on an HPC cluster and on AWS, compared on speed and cost.',
+        metric: 'HPC vs AWS',
+        project: 'high-performance-route-optimization',
+      },
+    ],
   },
 ];
 
