@@ -6,7 +6,7 @@ Source for my personal site. Built with [Astro](https://astro.build), hosted on 
 
 | What | Where |
 | --- | --- |
-| Name, links, roles, education, toolkit, principles, journey levels | `src/data/site.ts` |
+| Name, links, roles, education, toolkit, How I build board, journey levels | `src/data/site.ts` |
 | Project write-ups | `README.md`, then run `npm run content` |
 | Blog posts and book reviews | `src/content/writing/` (copy `_template.md`) |
 
