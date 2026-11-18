@@ -131,7 +131,23 @@ export const certifications = [
   'PHP Development Training (Proshore)',
 ];
 
-// Little ticket stubs on the Work page.
+// The three projects on the home page, each with the line that sells it.
+export const selectedWork: { id: string; line: string }[] = [
+  {
+    id: 'e-commerce-marketplace-integration-and-synchronization-platform',
+    line: 'Rating up from 4.5 to 4.8, for sellers across four continents',
+  },
+  {
+    id: 'large-scale-banking-data-migration-and-validation',
+    line: '100,000+ customer records moved with zero data loss and zero rollbacks',
+  },
+  {
+    id: 'fittracker',
+    line: 'An LLM (Gemma 2B) running on the phone. Fully offline, nothing leaves the device',
+  },
+];
+
+// Little ticket stubs on the home and Work pages.
 export const recognition = [
   { year: '2022', title: 'Key Contributor Award', where: 'Digital Product Labs', note: 'Fourteen straight days with the team, bringing back a company-wide sync outage.' },
   { year: '2023', title: 'Speaker', where: 'Proshore knowledge sharing', note: 'Talk to an international audience on Hotjar and analytics-driven UX.', link: 'https://proshore.eu/kss-level-up-website-with-hotjar/' },

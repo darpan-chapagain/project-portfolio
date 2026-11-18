@@ -1,8 +1,13 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import Doodle from './Doodle.astro';
-interface Props { items: CollectionEntry<'projects'>[]; label: string }
-const { items, label } = Astro.props;
+interface Props {
+  items: CollectionEntry<'projects'>[];
+  label: string;
+  /** Optional lead line per project id, in place of its first result. */
+  lines?: Record<string, string>;
+}
+const { items, label, lines = {} } = Astro.props;
 ---
 <ul class="sheet" aria-label={label}>
   {items.map((p) => (
@@ -12,7 +17,7 @@ const { items, label } = Astro.props;
         <span class="domain">{p.data.domain}</span>
         <span class="title display">{p.data.short}</span>
         {p.data.apps.length > 0 && <span class="live hand">{p.data.apps.length} apps live on Shopify</span>}
-        {p.data.results[0] && <span class="result">{p.data.results[0]}</span>}
+        {(lines[p.id] ?? p.data.results[0]) && <span class="result">{lines[p.id] ?? p.data.results[0]}</span>}
         <span class="role">{p.data.role}</span>
         <svg class="pick" viewBox="0 0 200 140" preserveAspectRatio="none" aria-hidden="true">
           <path d="M28 18 C80 2 160 4 186 30 C204 60 190 118 128 132 C70 142 14 126 8 84 C2 50 20 26 60 14" pathLength="1" />

@@ -7,11 +7,13 @@ import ContactSheet from '../components/ContactSheet.astro';
 import Doodle from '../components/Doodle.astro';
 import Sky from '../components/Sky.astro';
 import ProductBoard from '../components/ProductBoard.astro';
-import { person, roles, education, clients } from '../data/site';
+import Stubs from '../components/Stubs.astro';
+import { person, roles, education, clients, selectedWork } from '../data/site';
 
 // The home page is the trailer. Each section shows a little and links to the full version.
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
-const featured = projects.filter((p) => p.data.featured).slice(0, 3);
+const featured = selectedWork.map((w) => projects.find((p) => p.id === w.id)!);
+const lines = Object.fromEntries(selectedWork.map((w) => [w.id, w.line]));
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 const masters = education[0];
 
@@ -82,14 +84,22 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     <div class="wrap">
       <div class="section-head" data-speed="-0.04">
         <h2 id="work-title" class="display">Selected work</h2>
-        <p>Three of the {projects.length}. Pick a frame to read how it was built.</p>
+        <p>Three of the {projects.length}: live apps used around the world, a banking migration and AI on a phone. Pick a frame to read how it was built.</p>
       </div>
-      <ContactSheet items={featured} label="Selected projects" />
+      <ContactSheet items={featured} lines={lines} label="Selected projects" />
       <a class="all-link" href="/work/">
         <span class="hand">See all {projects.length} projects</span>
         <Doodle name="arrow" class="all-arrow" />
       </a>
     </div>
+  </section>
+
+  <section class="section wrap honours" aria-labelledby="honours-title">
+    <div class="section-head" data-speed="-0.04">
+      <h2 id="honours-title" class="display">Along the way</h2>
+      <p>An award, a talk, some mentoring and a bit of community work.</p>
+    </div>
+    <Stubs />
   </section>
 
   <PlayRing compact />
