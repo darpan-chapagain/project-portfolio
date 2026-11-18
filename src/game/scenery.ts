@@ -1,6 +1,6 @@
 // Scenery for /play, drawn in ink lines with a pixel pen. Every function takes screen
 // coordinates; the engine works out where things are on screen.
-import { G, W, Pen, type Pal, textWidth } from './art';
+import { G, W, Pen, type Pal, textWidth, bigText } from './art';
 
 export const hash = (n: number) => {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -216,9 +216,11 @@ export function building(p: Pen, pal: Pal, type: string, sx: number, sign: strin
       // closed sign, taped across the door
       p.c(L).line(mid - 7, G - 23, mid + 7, G - 2);
       p.line(mid + 7, G - 23, mid - 7, G - 2);
-      const bw = textWidth(note) + 6;
-      p.panel(mid - bw / 2, G - 34, bw, 9, pal.yellow, L);
-      p.c('#2b2614').text(note, mid, G - 32, 'center');
+      // a sandwich board out front, left of the door
+      const bw = textWidth(note) + 6, bx = mid - bw - 12;
+      p.c(L).line(bx + 6, G - 15, bx + 3, G); p.line(bx + bw - 6, G - 15, bx + bw - 3, G);
+      p.panel(bx, G - 24, bw, 9, pal.yellow, L);
+      p.c('#2b2614').text(note, bx + bw / 2, G - 22, 'center');
     }
   } else if (type === 'homeoffice') {
     // a room with the front wall cut away, lit by a laptop at night
@@ -319,11 +321,12 @@ export function building(p: Pen, pal: Pal, type: string, sx: number, sign: strin
 
 export const PROP_W: Record<string, number> = {
   stupa: 66, flags: 90, desk: 96, familyhome: 84, whiteboard: 38, apartment: 128, mirror: 14, studytable: 44, lamp: 8, tree: 24,
+  worldmap: 88, rating: 48, workdesk: 35, chart: 66,
 };
 
 export function prop(
   p: Pen, pal: Pal, type: string, sx: number, t: number, night: number,
-  opts: { lit?: number[]; door?: number; hutDoor?: number; figures?: boolean; unpacked?: boolean; lamp?: boolean } = {},
+  opts: { lit?: number[]; door?: number; hutDoor?: number; figures?: boolean; unpacked?: boolean; folded?: boolean; lamp?: boolean } = {},
 ) {
   const L = pal.line, F = pal.fill;
   if (type === 'stupa') {
@@ -445,40 +448,64 @@ export function prop(
     p.c(pal.mid).h(sx + 4, sx + 30, G - 20); p.h(sx + 4, sx + 22, G - 17);
     p.c(L).h(sx + 2, sx + 35, G - 12);
   } else if (type === 'apartment') {
+    // Your first place in Ohio, front wall cut away: bed, a kitchen corner, the laundry.
     const w = 128, top = G - 50;
     p.panel(sx, top, w, 51, F, L);
     p.c(L).h(sx - 3, sx + w + 2, top);
-    p.v(sx + 44, top + 1, G); p.v(sx + 88, top + 1, G);
-    // bed
-    p.panel(sx + 6, G - 12, 32, 8, F, L);
-    p.panel(sx + 8, G - 16, 9, 5, F, L);
-    p.c(L).v(sx + 6, G - 4, G); p.v(sx + 37, G - 4, G);
-    // window
-    p.panel(sx + 14, top + 8, 18, 14, pal.bg, L);
-    p.c(L).v(sx + 23, top + 8, top + 21);
-    // stove and a pot, still smoking
-    p.panel(sx + 52, G - 16, 26, 16, F, L);
-    p.c(L).h(sx + 54, sx + 75, G - 12);
-    p.panel(sx + 58, G - 22, 14, 6, L, L);
-    p.c(pal.mid);
-    for (let i = 0; i < 3; i++) {
-      const y = G - 26 - i * 5 - ((t * 8) % 5);
-      p.px(sx + 63 + Math.round(Math.sin(t * 2 + i) * 2), y);
-      p.px(sx + 64 + Math.round(Math.sin(t * 2 + i + 1) * 2), y - 2);
+    p.v(sx + 42, top + 1, G); p.v(sx + 88, top + 1, G);
+    // bed and window
+    p.panel(sx + 4, G - 12, 34, 8, F, L);
+    p.panel(sx + 6, G - 16, 9, 5, F, L);
+    p.c(pal.blue).rect(sx + 16, G - 11, 21, 6);
+    p.c(L).v(sx + 4, G - 4, G); p.v(sx + 37, G - 4, G);
+    p.panel(sx + 12, top + 8, 18, 14, pal.bg, L);
+    p.c(L).v(sx + 21, top + 8, top + 21);
+    // kitchen: counter, a rice cooker that has clearly burnt the rice, a bowl of black rice
+    p.panel(sx + 46, G - 14, 38, 15, F, L);
+    p.c(L).h(sx + 46, sx + 83, G - 11);
+    p.panel(sx + 51, G - 25, 16, 11, F, L);
+    p.c(L).h(sx + 52, sx + 65, G - 22);
+    p.c(F).rect(sx + 53, G - 28, 12, 3);
+    p.c(L).h(sx + 54, sx + 63, G - 29); p.px(sx + 53, G - 28); p.px(sx + 64, G - 28);
+    p.rect(sx + 58, G - 31, 2, 2);
+    p.c(pal.red).rect(sx + 62, G - 19, 2, 2);
+    // thick dark smoke
+    for (let i = 0; i < 4; i++) {
+      const k = ((t * 0.5 + i * 0.25) % 1);
+      const r = 2 + Math.round(k * 4);
+      p.x.globalAlpha = 0.85 * (1 - k);
+      p.c(pal.dark ? pal.mid : pal.line).disc(sx + 59 + Math.round(Math.sin(t * 1.5 + i) * 3), G - 33 - Math.round(k * 22), r);
+      p.x.globalAlpha = 1;
     }
-    // laundry pile
+    // bowl of burnt rice
+    p.c(L).h(sx + 70, sx + 80, G - 15); p.h(sx + 71, sx + 79, G - 14); p.h(sx + 73, sx + 77, G - 13);
+    p.c(pal.dark ? pal.mid : pal.line);
+    for (let i = 0; i < 6; i++) p.px(sx + 71 + i * 2, G - 16 - (i % 2));
+    // laundry: a washer with its drum turning, and the clothes
+    p.panel(sx + 91, G - 20, 17, 21, F, L);
+    p.c(L).h(sx + 92, sx + 106, G - 16);
+    p.circle(sx + 99, G - 8, 5);
+    const a = t * 6;
+    p.c(pal.blue).px(sx + 99 + Math.round(Math.cos(a) * 3), G - 8 + Math.round(Math.sin(a) * 3));
+    p.c(pal.red).px(sx + 99 + Math.round(Math.cos(a + 2) * 3), G - 8 + Math.round(Math.sin(a + 2) * 3));
     const cols = [pal.blue, pal.red, pal.green, pal.yellow, pal.mid];
-    for (let i = 0; i < 18; i++) {
-      const x = sx + 96 + (i % 6) * 4 + (Math.floor(i / 6) % 2) * 2, y = G - 4 - Math.floor(i / 6) * 4;
-      p.c(cols[i % 5]).rect(x, y, 4, 3);
+    if (opts.folded) {
+      // figured out: a neat folded stack and a tick
+      for (let i = 0; i < 5; i++) p.panel(sx + 111, G - 4 - i * 3, 12, 4, cols[i], L);
+      p.c(pal.green).line(sx + 113, G - 24, sx + 115, G - 22);
+      p.line(sx + 115, G - 22, sx + 120, G - 28);
+    } else {
+      // a basket spilling over, socks on the floor
+      p.panel(sx + 110, G - 10, 14, 11, F, L);
+      for (let i = 0; i < 14; i++) {
+        const x = sx + 109 + (i * 5) % 16, y = G - 12 - Math.floor(i / 3) * 2 - (i % 2);
+        p.c(cols[i % 5]).rect(x, y, 4, 3);
+      }
+      p.c(pal.red).rect(sx + 104, G - 2, 4, 2); p.c(pal.blue).rect(sx + 126, G - 2, 3, 2);
     }
-    p.c(L).h(sx + 94, sx + 122, G);
-    // lamp
-    p.c(L).v(sx + 120, G - 26, G);
-    p.c(pal.yellow).rect(sx + 117, G - 30, 7, 4);
     if (opts.unpacked) {
-      p.panel(sx + 39, G - 9, 7, 9, pal.redShade, L);
-      p.c(L).box(sx + 41, G - 11, 3, 2);
+      p.panel(sx + 30, G - 9, 7, 9, pal.redShade, L);
+      p.c(L).box(sx + 32, G - 11, 3, 2);
     }
   } else if (type === 'studytable') {
     p.c(L).h(sx, sx + 43, G - 12);
@@ -648,4 +675,116 @@ export function boss(p: Pen, pal: Pal, look: string, cx: number, hp: number, t: 
     p.c(L).circle(cx, y - 8, 9);
     angry(cx, y - 10);
   }
+}
+
+// ---------------------------------------------------------------- work scenes
+
+/** A world map of where the sellers were, with lines pulsing back to the team. */
+export function worldmap(p: Pen, pal: Pal, sx: number, t: number) {
+  const L = pal.line;
+  p.c(L).v(sx + 8, G - 12, G); p.v(sx + 78, G - 12, G);
+  p.panel(sx, G - 58, 88, 46, pal.fill, L);
+  p.c(L).text('SELLERS EVERYWHERE', sx + 44, G - 55, 'center');
+  // rough continents
+  const land: [number, number, number, number][] = [
+    [8, 14, 18, 10], [12, 24, 8, 10], [34, 13, 12, 7], [38, 20, 10, 12], [50, 12, 22, 12], [66, 28, 10, 6],
+  ];
+  p.c(pal.green);
+  for (const [x, y, w, h] of land) for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (hash((x + i) * 7 + (y + j) * 13) > 0.25) p.px(sx + x + i, G - 58 + y + j);
+  // pins and pulses back to the team in the corner
+  const pins: [number, number, string][] = [[16, 18, 'US'], [40, 16, 'EU'], [60, 17, 'ASIA'], [72, 31, 'AU']];
+  const hub = [sx + 44, G - 18];
+  pins.forEach(([x, y, label], i) => {
+    const px = sx + x, py = G - 58 + y;
+    const k = ((t * 0.8 + i * 0.25) % 1);
+    p.c(pal.yellow).px(px + (hub[0] - px) * k, py + (hub[1] - py) * k);
+    p.c(pal.red).rect(px - 1, py - 1, 3, 3);
+    p.c(L).text(label, px, py + 3, 'center');
+  });
+  p.c(L).box(hub[0] - 3, hub[1] - 2, 7, 4);
+}
+
+/** The app's star rating, as a sign. */
+export function ratingBoard(p: Pen, pal: Pal, sx: number, value: number, glow: number) {
+  const L = pal.line;
+  p.c(L).v(sx + 23, G - 12, G);
+  p.panel(sx, G - 46, 48, 34, pal.fill, L);
+  p.c(L).text('APP RATING', sx + 24, G - 43, 'center');
+  bigText(p.c(glow > 0 ? pal.yellow : L), value.toFixed(1), sx + 24, G - 35, 2, 'center');
+  if (glow > 0) bigText(p.c(L), value.toFixed(1), sx + 24, G - 35, 2, 'center');
+  for (let i = 0; i < 5; i++) {
+    const x = sx + 6 + i * 8, y = G - 21;
+    const fill = Math.max(0, Math.min(1, value - i));
+    p.c(L).box(x, y, 6, 6);
+    if (fill > 0) p.c(pal.yellow).rect(x + 1, y + 1, Math.max(1, Math.round(4 * fill)), 4);
+  }
+}
+
+/** A desk you build things at. `progress` 0..1 shows a bar and typing on the screen. */
+export function workdesk(p: Pen, pal: Pal, sx: number, t: number, progress: number, label: string) {
+  const L = pal.line;
+  p.c(L).h(sx, sx + 34, G - 12);
+  p.v(sx + 2, G - 11, G); p.v(sx + 32, G - 11, G);
+  p.panel(sx + 9, G - 26, 18, 13, L, L);
+  p.c(L).h(sx + 6, sx + 30, G - 13);
+  // code on the screen
+  const lines = progress > 0 ? Math.floor(t * 6) % 5 + 1 : 3;
+  for (let i = 0; i < lines; i++) p.c(i % 2 ? pal.yellow : pal.green).h(sx + 11, sx + 11 + ((i * 5 + 3) % 12), G - 24 + i * 2);
+  if (progress > 0 && progress < 1.01) {
+    const w = Math.max(60, textWidth(label) + 10);
+    p.panel(sx + 17 - w / 2, G - 52, w, 15, pal.fill, L);
+    p.c(L).text(label, sx + 17, G - 50, 'center');
+    p.c(L).box(sx + 21 - w / 2, G - 43, w - 8, 4);
+    p.c(progress >= 1 ? pal.green : pal.yellow).rect(sx + 22 - w / 2, G - 42, Math.round((w - 10) * Math.min(1, progress)), 2);
+  }
+}
+
+/** Revenue bars climbing to a dashed target line. */
+export function chart(p: Pen, pal: Pal, sx: number, k: number, result: string) {
+  const L = pal.line;
+  p.c(L).v(sx + 6, G - 12, G); p.v(sx + 60, G - 12, G);
+  p.panel(sx, G - 60, 66, 48, pal.fill, L);
+  p.c(L).text('REVENUE', sx + 33, G - 57, 'center');
+  p.v(sx + 8, G - 50, G - 17); p.h(sx + 8, sx + 60, G - 17);
+  p.c(pal.red);
+  for (let x = sx + 9; x < sx + 60; x += 4) p.h(x, x + 1, G - 44);
+  const bars = [0.25, 0.4, 0.55, 0.72, 0.9, 1.08];
+  bars.forEach((h, i) => {
+    const show = Math.max(0, Math.min(1, k * bars.length - i));
+    const bh = Math.round(h * 27 * show);
+    if (bh > 0) p.panel(sx + 11 + i * 8, G - 17 - bh, 6, bh, i === bars.length - 1 && k >= 1 ? pal.green : pal.blue, L);
+  });
+  if (k >= 1) { p.c(pal.green).text(result, sx + 33, G - 52 + 1, 'center'); }
+}
+
+/** A bank branch, with the mobile banking app popping up once it is live. */
+export function bankBranch(p: Pen, pal: Pal, sx: number, live: boolean, t: number, phone: HTMLCanvasElement) {
+  const L = pal.line, F = pal.fill;
+  p.panel(sx, G - 30, 40, 31, F, L);
+  p.tri(sx - 3, G - 30, sx + 20, G - 40, sx + 43, G - 30, F, L);
+  p.c(L).text('BANK', sx + 20, G - 37 + 1, 'center');
+  for (const x of [sx + 5, sx + 13, sx + 25, sx + 33]) { p.c(L).v(x, G - 27, G - 3); p.v(x + 2, G - 27, G - 3); }
+  p.panel(sx + 17, G - 14, 7, 15, pal.bg, L);
+  p.c(L).h(sx - 2, sx + 42, G - 2);
+  if (live) {
+    const bob = Math.round(Math.sin(t * 3 + sx) * 1.5);
+    p.x.drawImage(phone, sx + 14, G - 76 + bob);
+    p.panel(sx + 10, G - 52 + bob, 21, 8, pal.green, L);
+    p.c(pal.fill).text('LIVE', sx + 20, G - 50 + bob, 'center');
+  }
+}
+
+/** The mobile banking app on a phone: header, balance, transfer buttons. 12x22. */
+export function phoneApp(pal: Pal): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = 13; c.height = 22;
+  const p = new Pen(c.getContext('2d')!);
+  p.panel(0, 0, 13, 22, pal.fill, pal.line);
+  p.c(pal.yellow).rect(1, 1, 11, 4);
+  p.c(pal.line).h(3, 9, 3);
+  p.c(pal.mid).h(2, 6, 7);
+  p.c(pal.line).rect(2, 9, 8, 2);
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) p.panel(2 + i * 3, 13 + j * 3, 3, 3, i === 1 && j === 0 ? pal.green : pal.blue, pal.line);
+  p.c(pal.line).h(5, 7, 20);
+  return c;
 }

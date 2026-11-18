@@ -1,10 +1,26 @@
 @import '@fontsource/league-gothic/400.css';
 @import '@fontsource-variable/literata/index.css';
 @import '@fontsource-variable/literata/wght-italic.css';
-@import '@fontsource/kalam/400.css';
-@import '@fontsource/kalam/700.css';
+/* Kalam in Latin only: the few Devanagari words in handwriting fall back to Teko, which the
+   name flip already loads. Saves about 110KB. */
+@import '@fontsource/kalam/latin-400.css';
+@import '@fontsource/kalam/latin-700.css';
 @import '@fontsource/teko/600.css';
-@import '@fontsource/charis-sil/400.css';
+
+/* Charis SIL cut down to the characters of the pronunciation line (about 6KB instead of 92KB).
+   Regenerate with fonttools if the IPA in site.ts changes. */
+@font-face {
+  font-family: 'Charis IPA';
+  font-display: swap;
+  src: url('../fonts/charis-ipa-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF;
+}
+@font-face {
+  font-family: 'Charis IPA';
+  font-display: swap;
+  src: url('../fonts/charis-ipa-ext.woff2') format('woff2');
+  unicode-range: U+0250-02FF;
+}
 @import 'lenis/dist/lenis.css';
 
 :root {
@@ -35,9 +51,9 @@
 
   --display: 'League Gothic', 'Impact', 'Arial Narrow', sans-serif;
   --text: 'Literata Variable', 'Georgia', serif;
-  --hand: 'Kalam', 'Comic Sans MS', cursive;
+  --hand: 'Kalam', 'Teko', 'Comic Sans MS', cursive;
   --deva: 'Teko', 'Kalam', sans-serif;
-  --ipa: 'Charis SIL', 'Doulos SIL', 'Gentium Plus', serif;
+  --ipa: 'Charis IPA', 'Charis SIL', 'Doulos SIL', 'Gentium Plus', serif;
 
   /* Bringhurst's classic scale, in px: 14 16 18 21 24 36 48 60 72 */
   --s-14: 0.875rem;
@@ -184,6 +200,11 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   33.333% { clip-path: var(--torn-1); }
   66.666% { clip-path: var(--torn-2); }
 }
+/* Wobbles are paused off screen and while you scroll, so scrolling stays smooth. */
+.torn.off, .doodle.off .ink, .frame.off,
+html.scrolling .torn, html.scrolling .doodle .ink, html.scrolling .frame.is-on { animation-play-state: paused; }
+/* The lite page (set in Base.astro for low-end devices) keeps the look but drops the wobble. */
+.lite .torn, .lite .doodle .ink, .lite .frame.is-on { animation: none !important; }
 /* A wrapper that casts the paper's shadow, following the torn edge. */
 .paper-shadow { filter: drop-shadow(0 12px 14px var(--shadow)); }
 

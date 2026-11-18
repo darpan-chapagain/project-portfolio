@@ -3,7 +3,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import { levels, person } from '../data/site';
-import { script, cast, sequel, type LevelScript } from '../data/game';
+import { script, cast, sequel, skillIcons, type LevelScript } from '../data/game';
 
 const projects = await getCollection('projects');
 const titleOf = (id: string) => projects.find((p) => p.id === id)?.data.short ?? id;
@@ -24,7 +24,7 @@ const playable = levels.map((l) => ({
   skills: l.unlocked ?? [],
 }));
 const next = levels.length + 1;
-const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster } };
+const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster }, skillIcons };
 ---
 <Base title="Play my journey" description="A small pixel game of my journey so far, from Kathmandu to Fairborn, Ohio.">
   <section class="play wrap" aria-labelledby="play-title">
@@ -49,6 +49,7 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
       <p class="caption" data-caption hidden></p>
       <p class="toast hand" data-toast role="status" hidden></p>
       <button type="button" class="jump hand" data-jump aria-label="Jump">jump</button>
+      <button type="button" class="jump attack hand" data-attack aria-label="Attack">hit</button>
 
       <div class="start" data-start>
         <div class="sheet">
@@ -56,8 +57,8 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
           <h2 class="display">Play my journey</h2>
           <p>From Kathmandu to Fairborn, one level at a time.</p>
           <dl class="controls">
-            <div><dt class="hand">Keyboard</dt><dd>Arrow keys or A and D to walk. Space to jump. E to go inside.</dd></div>
-            <div><dt class="hand">Mouse or touch</dt><dd>Tap where you want to go. Tap high to jump. Tap a door to go inside, or a boss to take it on.</dd></div>
+            <div><dt class="hand">Keyboard</dt><dd>Arrow keys or A and D to walk. Space to jump. F to hit. E to go inside a building.</dd></div>
+            <div><dt class="hand">Mouse or touch</dt><dd>Tap where you want to go, tap high to jump, tap a building to go in. Tap a boss to fight it, or use the hit button.</dd></div>
           </dl>
           <button type="button" class="go" data-begin>Start</button>
           <p class="alt">Rather read? <a href="/journey/">See the storyboard</a>.</p>
@@ -255,6 +256,7 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
     box-shadow: 0 6px 10px -6px var(--shadow);
   }
   .toast:global(.pop) { animation: toast-in 380ms cubic-bezier(0.3, 1.5, 0.5, 1); }
+  .toast :global(img) { width: 1.4em; height: 1.4em; margin-right: 0.4em; vertical-align: -0.3em; image-rendering: pixelated; }
   @keyframes toast-in { from { opacity: 0; translate: 0 -10px; } to { opacity: 1; translate: 0 0; } }
 
   .jump {
@@ -273,6 +275,7 @@ const data = { levels: playable, cast, sequel: { n: next, poster: sequel.poster 
     touch-action: none;
   }
   @media (pointer: coarse) { .jump { display: block; width: clamp(2.4rem, 9cqi, 3.6rem); height: clamp(2.4rem, 9cqi, 3.6rem); font-size: clamp(0.75rem, 2.4cqi, 1rem); } }
+  .attack { right: auto; left: 0.9rem; background: var(--postit); color: var(--postit-ink); }
   /* Phones on their side: give the game every pixel under the top bar. */
   @media (max-height: 520px) {
     .play { padding-top: 4.2rem; padding-bottom: 1rem; padding-inline: 0.75rem; }

@@ -1,6 +1,7 @@
 // Pixel art for /play: a theme-aware palette, a tiny pen, a 3x5 font and the people.
 // Everything is drawn from text, so there are no image files to load.
 import { HERO_FRAMES, SUITCASE } from './heroes';
+import { ICONS } from './icons';
 
 export const W = 320;
 export const H = 180;
@@ -210,7 +211,7 @@ const FONT: Record<string, string[]> = {
   ' ': ['...', '...', '...', '...', '...'], '.': ['...', '...', '...', '...', '.k.'], ',': ['...', '...', '...', '.k.', 'k..'],
   '-': ['...', '...', 'kkk', '...', '...'], '?': ['kk.', '..k', '.k.', '...', '.k.'], '!': ['.k.', '.k.', '.k.', '...', '.k.'],
   ':': ['...', '.k.', '...', '.k.', '...'], '/': ['..k', '..k', '.k.', 'k..', 'k..'], '+': ['...', '.k.', 'kkk', '.k.', '...'],
-  "'": ['.k.', '.k.', '...', '...', '...'], '<': ['..k', '.k.', 'k..', '.k.', '..k'], '>': ['k..', '.k.', '..k', '.k.', 'k..'],
+  "'": ['.k.', '.k.', '...', '...', '...'], '$': ['.kk', 'kk.', '.k.', '.kk', 'kk.'], '<': ['..k', '.k.', 'k..', '.k.', '..k'], '>': ['k..', '.k.', '..k', '.k.', 'k..'],
 };
 
 // ---------------------------------------------------------------- sprites from text
@@ -303,6 +304,9 @@ const BODIES: Record<string, string[]> = {
   daura: ['....kkkkk...', '...kgwwwgk..', '...kgwkwgk..', '...kgwwkgk..', '...kgwwkgk..', '...kgwwwgk..'],
   sari: ['....kkkkk...', '...krrwrrk..', '...krrrwrk..', '...krrrrwk..', '...krrrrrk..', '...krrrrrk..'],
   sariGreen: ['....kkkkk...', '...knnwnnk..', '...knnnwnk..', '...knnnnwk..', '...knnnnnk..', '...knnnnnk..'],
+  apron: ['....kkkkk...', '...kwnnnwk..', '...kwnnnwk..', '...kwnnknk..', '...kwnnknk..', '....kkkkk...'],
+  apronRed: ['....kkkkk...', '...kbrrrbk..', '...kbrrrbk..', '...kbrrkrk..', '...kbrrkrk..', '....kkkkk...'],
+  tie: ['....kkkkk...', '...kgwrwgk..', '...kggrggk..', '...kggrkgk..', '...kgggkgk..', '....kkkkk...'],
 };
 
 const LEGS: Record<string, string[]> = {
@@ -338,6 +342,12 @@ export const LOOKS: Record<string, Look> = {
   prof: { hair: 'H', body: 'shirt', glasses: true, beard: true },
   friend: { hair: 'h', body: 'hoodie' },
   friend2: { hair: 'h', style: 'long', body: 'green' },
+  seller: { hair: 'h', body: 'apron' },
+  seller2: { hair: 'h', style: 'long', body: 'apronRed' },
+  seller3: { hair: 'H', style: 'bun', body: 'apron' },
+  manager: { hair: 'H', body: 'tie', glasses: true },
+  supervisor: { hair: 'h', style: 'long', body: 'suit' },
+  banker: { hair: 'h', body: 'tie', moustache: true },
 };
 
 function person(look: Look, legs: keyof typeof LEGS): string[] {
@@ -396,6 +406,11 @@ export function makePerson(key: string, pal: Pal, extra: Partial<Look> = {}): Fr
 }
 
 export const suitcase = (pal: Pal) => sprite(SUITCASE, pal);
+
+/** Skill and achievement icons, 11x11, by name. */
+export function iconSprites(pal: Pal): Record<string, Sprite> {
+  return Object.fromEntries(Object.entries(ICONS).map(([k, rows]) => [k, sprite(rows, pal)]));
+}
 
 /** One hand-drawn pose by name, for poses only some people have (the player's back view). */
 export function heroSprite(key: string, pose: string, pal: Pal): Sprite | null {

@@ -1,6 +1,6 @@
 // The game loop for /play. Reads the level data the page hands it, builds one long street,
 // and plays it with keyboard, mouse or touch.
-import { W, H, G, Pen, readPal, type Pal, makePerson, type FrameSet, sprite, type Sprite, STAR, DIPLOMA, suitcase, heroSprite } from './art';
+import { W, H, G, Pen, readPal, type Pal, makePerson, type FrameSet, sprite, type Sprite, STAR, DIPLOMA, suitcase, heroSprite, iconSprites, bigText } from './art';
 import * as S from './scenery';
 import * as Shots from './shots';
 import type { Beat, Line, LevelScript } from '../data/game';
@@ -17,15 +17,17 @@ export type GameData = {
   levels: LevelData[];
   cast: Record<string, { name: string; en?: string; look: string }>;
   sequel: { n: number; poster: string[] };
+  skillIcons: Record<string, string>;
 };
 
 type Section = { i: number; level?: LevelData; s?: LevelScript; x0: number; x1: number; scene: string; kind: 'level' | 'sky' | 'end'; seed: number };
-type HomeState = { door?: number; hutDoor?: number; lit?: number[]; figures?: boolean; unpacked?: boolean };
+type HomeState = { door?: number; hutDoor?: number; lit?: number[]; figures?: boolean; unpacked?: boolean; folded?: boolean; progress?: number; label?: string };
 type Thing = { kind: 'building' | 'prop' | 'kiosk' | 'mirror' | 'sequel'; x: number; w: number; type: string; sign?: string; note?: string; done?: boolean; clear?: boolean; active?: boolean; st: HomeState };
 type Npc = { who: string; look: string; x: number; homeX: number; facing: 1 | -1; mask: boolean; party: boolean; joined: boolean; left: boolean; wave: boolean; inside: boolean; y: number; vy: number; walking: boolean; order: number };
-type Pickup = { x: number; y: number; label: string; got: boolean; kind: 'star' | 'diploma'; then?: string[] };
+type Pickup = { x: number; y: number; label: string; got: boolean; kind: 'skill' | 'reward'; icon: string; skill?: boolean; then?: { text: string; icon?: string }[] };
 type Boss = { look: string; name: string; x: number; min: number; max: number; dir: number; hp: number; maxHp: number; alive: boolean; hit: number; cd: number; gateX: number; gateOpen: number; beaten: string[]; reward?: LevelScript['reward']; section: number };
-type Door = { x: number; card: string };
+/** A building you can go into: anywhere between x0 and x1 counts, the prompt sits over the door at x. */
+type Door = { x: number; x0: number; x1: number; card: string; top: number };
 type Trigger = { x: number; fired: boolean; beat: Beat; section: number };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; col: 'line' | 'yellow' | 'mid' | 'red' | 'tear' };
 
@@ -66,6 +68,9 @@ export function startGame(root: HTMLElement, data: GameData) {
   let cache = new Map<string, FrameSet>();
   let stars: Sprite, diploma: Sprite, bag: Sprite, planeSprite: Sprite;
   let backUp: Sprite | null = null;
+  let icons: Record<string, Sprite> = {};
+  let phone: HTMLCanvasElement;
+  const iconURLs = new Map<string, string>();
   const paint = () => {
     pal = readPal();
     cache = new Map();
@@ -73,6 +78,10 @@ export function startGame(root: HTMLElement, data: GameData) {
     diploma = sprite(DIPLOMA, pal);
     bag = suitcase(pal);
     backUp = null;
+    icons = iconSprites(pal);
+    icons.diploma = sprite(DIPLOMA, pal);
+    phone = S.phoneApp(pal);
+    iconURLs.clear();
     // the plane, drawn once at 1x so the flight shots can show it bigger
     planeSprite = document.createElement('canvas');
     planeSprite.width = 66;
@@ -97,7 +106,7 @@ export function startGame(root: HTMLElement, data: GameData) {
   let bosses: Boss[] = [];
   let doors: Door[] = [];
   let triggers: Trigger[] = [];
-  let kiosks: { thing: Thing; section: number; label: string; total: number; per: number; done?: Line }[] = [];
+  let kiosks: { thing: Thing; section: number; label: string; total: number; per: number; done?: Line; result?: string }[] = [];
   let worldEnd = 0;
   let flight: { section: number; planeX: number; runway: [number, number]; caption: string } | null = null;
   let landing: { x0: number; runway: [number, number] } | null = null;
@@ -115,7 +124,9 @@ export function startGame(root: HTMLElement, data: GameData) {
       const bw = S.BUILDING_W[s.building.type] ?? 90;
       const bx = x + s.building.at;
       things.push({ kind: 'building', x: bx, w: bw, type: s.building.type, sign: s.building.sign, note: s.building.note, st: {} });
-      doors.push({ x: s.building.type === 'airport' ? bx + 65 : bx + bw / 2, card: lv.id });
+      // the IN tag sits just above each door, clear of the building's signs
+      const doorTop: Record<string, number> = { college: 24, homeoffice: 66, tower: 26, office: 24, airport: 14, university: 20 };
+      doors.push({ x: s.building.type === 'airport' ? bx + 65 : bx + bw / 2, x0: bx, x1: bx + (s.building.type === 'airport' ? 130 : bw), card: lv.id, top: G - (doorTop[s.building.type] ?? 24) });
       (s.props ?? []).forEach((pr) => {
         things.push({ kind: pr.type === 'mirror' ? 'mirror' : 'prop', x: x + pr.at, w: S.PROP_W[pr.type] ?? 20, type: pr.type, clear: pr.clear, st: {} });
       });
@@ -126,8 +137,9 @@ export function startGame(root: HTMLElement, data: GameData) {
       (s.beats ?? []).forEach((b) => triggers.push({ x: x + b.at, fired: false, beat: b, section: si }));
       totalSkills += lv.skills.length;
       if (s.skills) {
-        lv.skills.forEach((label, k) => pickups.push({ x: x + s.skills!.from + k * s.skills!.gap, y: G - 30, label, got: false, kind: 'star' }));
+        lv.skills.forEach((label, k) => pickups.push({ x: x + s.skills!.from + k * s.skills!.gap, y: G - 30, label, got: false, kind: 'skill', icon: data.skillIcons[label] ?? 'star' }));
       }
+      if (s.rating) rating = s.rating;
       if (s.boss) {
         const bxx = x + s.boss.at;
         bosses.push({
@@ -138,9 +150,9 @@ export function startGame(root: HTMLElement, data: GameData) {
       if (s.deliver) {
         const per = s.deliver.total / s.deliver.at.length;
         s.deliver.at.forEach((a) => {
-          const thing: Thing = { kind: 'kiosk', x: x + a, w: 32, type: 'kiosk', done: false, st: {} };
+          const thing: Thing = { kind: 'kiosk', x: x + a, w: 43, type: 'bank', done: false, st: {} };
           things.push(thing);
-          kiosks.push({ thing, section: si, label: s.deliver!.label, total: s.deliver!.total, per, done: s.deliver!.done });
+          kiosks.push({ thing, section: si, label: s.deliver!.label, total: s.deliver!.total, per, done: s.deliver!.done, result: s.deliver!.result });
         });
       }
       if (landing === null && sections.length > 1 && sections[sections.length - 2].kind === 'sky') {
@@ -156,7 +168,7 @@ export function startGame(root: HTMLElement, data: GameData) {
     const last = sections[sections.length - 1];
     sections.push({ i: sections.length, x0: x, x1: x + 240, scene: last.scene === 'sky' ? 'city' : last.scene, kind: 'end', seed: 999 });
     things.push({ kind: 'sequel', x: x + 40, w: 104, type: 'sequel', st: {} });
-    doors.push({ x: x + 92, card: 'next' });
+    doors.push({ x: x + 92, x0: x + 40, x1: x + 144, card: 'next', top: G - 40 });
     worldEnd = x + 240;
   }
 
@@ -186,6 +198,11 @@ export function startGame(root: HTMLElement, data: GameData) {
   let skip = false;
   const keys = new Set<string>();
   let currentSection = -1;
+  let rating = 0, ratingGlow = 0;
+  let attackT = 0, attackCd = 0, attackQueued = false;
+  let grindDay = 0;
+  let levelUp: null | { t: number; title: string; sub: string } = null;
+  const seenLevels = new Set<number>();
 
   function reset() {
     build();
@@ -194,8 +211,9 @@ export function startGame(root: HTMLElement, data: GameData) {
     if (flight) plane = { x: flight.planeX, y: G, gear: true, active: false };
     cam = 0; camOverride = null; locks = 0; forcedNight = null; fade = 0; skillsGot = 0; delivered = 0; flown = false;
     history = []; particles = []; target = null; currentSection = -1;
+    attackT = 0; attackCd = 0; attackQueued = false; grindDay = 0; levelUp = null; seenLevels.clear(); ratingGlow = 0;
     ui.bubbles.innerHTML = '';
-    passive.length = 0; current = null;
+    passive.length = 0; active.forEach((a) => a.el.remove()); active = [];
     ui.caption.hidden = true;
     shot = null;
     zoom = zoomTo = 1;
@@ -246,7 +264,8 @@ export function startGame(root: HTMLElement, data: GameData) {
   // ------------------------------------------------------------ words on screen
   type Anchor = () => { x: number; y: number };
   const passive: { line: Line; anchor: Anchor }[] = [];
-  let current: { el: HTMLElement; anchor: Anchor; left: number } | null = null;
+  // Up to three people can talk at once, one bubble each; a speaker's next line waits its turn.
+  let active: { el: HTMLElement; anchor: Anchor; left: number; who: string; lift: number }[] = [];
 
   function bubble(line: Line, anchor: Anchor) {
     const el = document.createElement('div');
@@ -271,9 +290,9 @@ export function startGame(root: HTMLElement, data: GameData) {
     place(el, anchor);
     return el;
   }
-  function place(el: HTMLElement, anchor: Anchor) {
+  function place(el: HTMLElement, anchor: Anchor, lift = 0) {
     const a = anchor();
-    const bx = (a.x - cam - view.sx) * view.z, by = (a.y - view.sy) * view.z;
+    const bx = (a.x - cam - view.sx) * view.z, by = (a.y - lift - view.sy) * view.z;
     const x = Math.min(W - 30, Math.max(30, bx));
     el.style.left = `${(x / W) * 100}%`;
     el.style.top = `${(Math.max(30, by) / H) * 100}%`;
@@ -282,7 +301,9 @@ export function startGame(root: HTMLElement, data: GameData) {
 
   function anchorFor(line: Line, sec: number): Anchor {
     if (line.who) {
-      const n = (npcs[sec] ?? []).find((m) => m.who === line.who) ?? npcs.flat().find((m) => m.who === line.who);
+      // the nearest person with that name, in case the same person appears twice
+      const all = npcs.flat().filter((m) => m && m.who === line.who && !m.inside);
+      const n = all.sort((p, q) => Math.abs(p.x - player.x) - Math.abs(q.x - player.x))[0];
       if (n) return () => ({ x: n.x, y: n.y - frames(n.look).h - 4 });
     }
     const ph = () => frames(playerLook()).h + 4;
@@ -311,9 +332,13 @@ export function startGame(root: HTMLElement, data: GameData) {
     await wait(0.12, false);
   }
 
-  let toastQueue: string[] = [];
+  let toastQueue: { msg: string; icon?: string }[] = [];
   let toastLeft = 0;
-  function toast(msg: string) { toastQueue.push(msg); }
+  function toast(msg: string, icon?: string) { toastQueue.push({ msg, icon }); }
+  function iconURL(key: string) {
+    if (!iconURLs.has(key) && icons[key]) iconURLs.set(key, icons[key].toDataURL());
+    return iconURLs.get(key) ?? '';
+  }
 
   function updateHud() {
     const sec = sections[currentSection];
@@ -357,12 +382,26 @@ export function startGame(root: HTMLElement, data: GameData) {
     const b = tr.beat;
     const sec = tr.section;
     const list = npcs[sec] ?? [];
-    switch (b.action) {
-      case 'levelUp':
+    // these play their lines first (locked), then their moment
+    if (b.action === 'levelUp' || b.action === 'build' || b.action === 'grind') {
+      lock();
+      player.vx = 0;
+      for (const l of b.lines ?? []) await say(l, sec);
+      if (b.action === 'levelUp') {
         player.senior = true;
-        burst(player.x, player.y - 12, 'yellow', 22);
-        toast('Level up: Senior');
+        await powerUp('LEVEL UP!', 'SENIOR');
+        toast('Level up: Senior', 'tie');
+      } else if (b.action === 'build') await buildFeature(tr);
+      else await grind(tr);
+      unlock();
+      return;
+    }
+    switch (b.action) {
+      case 'fold': {
+        const apt = things.find((th) => th.type === 'apartment' && th.x >= sections[sec].x0 && th.x < sections[sec].x1);
+        if (apt) { apt.st.folded = true; burst(apt.x + 117, G - 14, 'yellow', 8); }
         break;
+      }
       case 'join': {
         const n = list[b.target ?? 0];
         if (n) { n.joined = true; n.vy = -120; n.order = list.filter((m) => m.joined).length - 1; }
@@ -404,6 +443,68 @@ export function startGame(root: HTMLElement, data: GameData) {
     const pr = s.s?.props?.[idx];
     if (!pr) return undefined;
     return things.find((th) => th.x === s.x0 + pr.at && th.type === pr.type);
+  }
+
+  /** The work desk nearest to a beat, in the same level. */
+  function deskNear(tr: Trigger) {
+    const sec = sections[tr.section];
+    return things
+      .filter((th) => th.type === 'workdesk' && th.x >= sec.x0 && th.x < sec.x1)
+      .sort((a, b) => Math.abs(a.x - tr.x) - Math.abs(b.x - tr.x))[0];
+  }
+
+  // Build a feature: walk to the desk, type, the bar fills, it ships, the rating goes up.
+  async function buildFeature(tr: Trigger) {
+    const desk = deskNear(tr);
+    if (!desk) return;
+    await walkPlayer(desk.x + 17);
+    player.facing = 1;
+    desk.st.label = tr.beat.label ?? 'FEATURE';
+    let k = 0;
+    while (k < 1) {
+      const dt = await nextFrame();
+      k = Math.min(1, k + dt / 2.6);
+      desk.st.progress = k;
+      if (Math.random() < dt * 8) particles.push({ x: desk.x + 18 + (Math.random() - 0.5) * 10, y: G - 15, vx: (Math.random() - 0.5) * 20, vy: -30, life: 0.3, col: 'mid' });
+    }
+    desk.st.progress = 1.01;
+    burst(desk.x + 17, G - 44, 'yellow', 14);
+    toast(`Shipped: ${tr.beat.shipped ?? (tr.beat.label ?? 'feature').toLowerCase()}`, 'code');
+    if (tr.beat.value) {
+      rating = tr.beat.value;
+      ratingGlow = 1.5;
+      toast(`App rating: ${rating.toFixed(1)}`, 'star');
+    }
+    await wait(0.9, false);
+    desk.st.progress = 0;
+  }
+
+  // Fourteen straight days: the counter runs, day and night flick past, you keep going.
+  async function grind(tr: Trigger) {
+    const desk = deskNear(tr);
+    if (desk) { await walkPlayer(desk.x + 17); player.facing = 1; }
+    for (let d = 1; d <= 14; d++) {
+      grindDay = d;
+      forcedNight = d % 2 ? 0.85 : 0.1;
+      if (desk) { desk.st.label = 'FIXING THE SYNC'; desk.st.progress = d / 14; }
+      await wait(d < 3 || d > 12 ? 0.45 : 0.22, false);
+    }
+    forcedNight = null;
+    grindDay = 0;
+    if (desk) desk.st.progress = 0;
+  }
+
+  // Like eating a mushroom: you flicker between sizes, then the level name stamps in.
+  async function powerUp(title: string, sub = '') {
+    levelUp = { t: 0, title, sub };
+    burst(player.x, player.y - 12, 'yellow', 26);
+    let k = 0;
+    while (k < 1.5) {
+      const dt = await nextFrame();
+      k += dt;
+      if (levelUp) levelUp.t = k;
+    }
+    levelUp = null;
   }
 
   async function walkPlayer(to: number, roof = false) {
@@ -748,6 +849,7 @@ export function startGame(root: HTMLElement, data: GameData) {
     }
     keys.add(e.key);
     if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') jumpQueued = true;
+    if ('fFxXjJ'.includes(e.key) && e.key.length === 1) attackQueued = true;
     if (e.key === 'e' || e.key === 'E' || e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') enterQueued = true;
     if (isLeft() || isRight()) target = null;
   });
@@ -764,10 +866,12 @@ export function startGame(root: HTMLElement, data: GameData) {
     canvas.focus({ preventScroll: true });
     if (locks > 0) { skip = true; return; }
     const p = toWorld(e);
-    const d = doors.find((q) => Math.abs(p.x - q.x) < 13 && p.y > G - 28 && p.y < G + 6);
-    if (d) { target = { x: d.x, door: d, set: t }; return; }
-    const b = bosses.find((q) => q.alive && Math.abs(p.x - q.x) < 15 && p.y > G - 34);
+    // a boss: walk up and hit it
+    const b = bosses.find((q) => q.alive && Math.abs(p.x - q.x) < 16 && p.y > G - 38);
     if (b) { target = { x: b.x, boss: b, set: t }; return; }
+    // a building: its door, or anywhere on its walls above head height
+    const d = doors.find((q) => (Math.abs(p.x - q.x) < 13 && p.y > G - 28 && p.y < G + 6) || (p.x > q.x0 && p.x < q.x1 && p.y < G - 26 && p.y > G - 130));
+    if (d) { target = { x: d.x, door: d, set: t }; return; }
     if (Math.abs(p.x - player.x) < 8 && p.y > player.y - 22 && p.y < player.y + 3) { jumpQueued = true; return; }
     target = { x: Math.max(6, Math.min(worldEnd - 6, p.x)), jump: p.y < G - 24, set: t };
   });
@@ -775,6 +879,11 @@ export function startGame(root: HTMLElement, data: GameData) {
     e.preventDefault();
     if (locks > 0) { skip = true; return; }
     jumpQueued = true;
+  });
+  root.querySelector('[data-attack]')?.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (locks > 0) { skip = true; return; }
+    attackQueued = true;
   });
 
   function begin() {
@@ -785,7 +894,27 @@ export function startGame(root: HTMLElement, data: GameData) {
   }
   ui.start.querySelector('[data-begin]')?.addEventListener('click', begin);
 
+  function hitBoss(b: Boss) {
+    if (!b.alive || b.cd > 0) return;
+    const top = G - (BOSS_TOP[b.look] ?? 20);
+    b.hp--;
+    b.hit = 0.25;
+    b.cd = 0.35;
+    burst(b.x, top, 'line', 8);
+    npcs.flat().forEach((n) => { if (n && n.joined) n.vy = -110; });
+    if (b.hp <= 0) {
+      b.alive = false;
+      burst(b.x, G - 14, 'yellow', 26);
+      b.beaten.forEach((m) => toast(m));
+      if (b.reward) {
+        pickups.push({ x: b.x, y: G - 30, label: b.reward.label, got: false, kind: 'reward', icon: b.reward.item, skill: b.reward.skill, then: b.reward.then });
+      }
+    }
+  }
+
   // ------------------------------------------------------------ update
+  const doorHere = () => doors.find((q) => player.x > q.x0 - 4 && player.x < q.x1 + 4);
+
   function sectionAt(x: number) {
     return sections.findIndex((s) => x >= s.x0 && x < s.x1);
   }
@@ -805,8 +934,11 @@ export function startGame(root: HTMLElement, data: GameData) {
           else {
             target.x = target.boss.x;
             const dx = target.boss.x - player.x;
-            if (Math.abs(dx) < 34 && player.ground) { jumpQueued = true; }
-            dir = Math.abs(dx) > 2 ? Math.sign(dx) : 0;
+            if (Math.abs(dx) < 20) {
+              player.facing = dx >= 0 ? 1 : -1;
+              attackQueued = true;
+              target = null;
+            } else dir = Math.sign(dx);
           }
         }
         if (target && !target.boss) {
@@ -850,9 +982,25 @@ export function startGame(root: HTMLElement, data: GameData) {
     }
     jumpQueued = false;
 
+    // attack: a quick swing in front of you
+    attackT = Math.max(0, attackT - dt);
+    attackCd = Math.max(0, attackCd - dt);
+    if (control && attackQueued && attackCd === 0 && !player.hidden) {
+      attackT = 0.22;
+      attackCd = 0.38;
+      const reach = player.x + player.facing * 12;
+      burst(reach, player.y - 12, 'line', 3);
+      const b = bosses.find((q) => q.alive && Math.abs(q.x - reach) < 16 && player.y > G - 36);
+      if (b) {
+        b.x = Math.max(b.min, Math.min(b.max, b.x + player.facing * 10));
+        hitBoss(b);
+      }
+    }
+    attackQueued = false;
+
     // doors
     if (control && enterQueued) {
-      const d = doors.find((q) => Math.abs(q.x - player.x) < 13);
+      const d = doorHere();
       if (d) openCard(d.card);
     }
     enterQueued = false;
@@ -866,6 +1014,17 @@ export function startGame(root: HTMLElement, data: GameData) {
       updateHud();
     }
 
+    // a new level: power up before anything else happens
+    const here = sections[currentSection];
+    if (state === 'play' && locks === 0 && !levelUp && here?.kind === 'level' && here.level && !seenLevels.has(here.i)) {
+      seenLevels.add(here.i);
+      if (here.i > 0) {
+        const lv = here.level;
+        void (async () => { lock(); player.vx = 0; await powerUp(`LEVEL ${lv.n}`, lv.title); unlock(); })();
+      }
+    }
+    ratingGlow = Math.max(0, ratingGlow - dt);
+
     // triggers
     if (state === 'play' && locks === 0) {
       for (const tr of triggers) {
@@ -876,26 +1035,31 @@ export function startGame(root: HTMLElement, data: GameData) {
     // skills and rewards
     for (const pk of pickups) {
       if (pk.got) continue;
-      const w = pk.kind === 'diploma' ? 7 : 5;
-      if (Math.abs(pk.x - player.x) < w + 4 && player.y - 18 < pk.y + 4 && player.y > pk.y - 5) {
+      const reach = pk.kind === 'reward'
+        ? Math.abs(pk.x - player.x) < 12
+        : Math.abs(pk.x - player.x) < 11 && player.y - 18 < pk.y + 6 && player.y > pk.y - 6;
+      if (reach) {
         pk.got = true;
-        skillsGot++;
-        burst(pk.x, pk.y, 'yellow', 12);
-        toast(pk.kind === 'diploma' ? pk.label : `Skill unlocked: ${pk.label}`);
-        (pk.then ?? []).forEach(toast);
+        if (pk.kind === 'skill' || pk.skill) skillsGot++;
+        burst(pk.x, pk.y, 'yellow', 14);
+        toast(pk.kind === 'reward' ? pk.label : `Skill unlocked: ${pk.label}`, pk.icon);
+        (pk.then ?? []).forEach((m) => toast(m.text, m.icon));
         updateHud();
       }
     }
 
     // bank kiosks
     for (const k of kiosks) {
-      if (k.thing.done || Math.abs(k.thing.x + 16 - player.x) > 16) continue;
+      if (k.thing.done || Math.abs(k.thing.x + 20 - player.x) > 18) continue;
       k.thing.done = true;
       delivered = Math.min(k.total, delivered + k.per);
-      burst(k.thing.x + 16, G - 20, 'yellow', 10);
-      toast(`${k.label}: ${delivered}/${k.total}`);
+      burst(k.thing.x + 20, G - 50, 'yellow', 12);
+      toast(`Mobile banking live: ${delivered}/${k.total} banks`, 'phone');
       updateHud();
-      if (delivered >= k.total && k.done) passive.push({ line: k.done, anchor: () => ({ x: player.x, y: player.y - 22 }) });
+      if (delivered >= k.total) {
+        if (k.done) passive.push({ line: k.done, anchor: () => ({ x: player.x, y: player.y - frames(playerLook()).h - 4 }) });
+        if (k.result) toast(`Revenue target hit: ${k.result}`, 'chart');
+      }
     }
 
     // bosses
@@ -910,22 +1074,10 @@ export function startGame(root: HTMLElement, data: GameData) {
       const top = G - (BOSS_TOP[b.look] ?? 20);
       const dx = player.x - b.x;
       if (Math.abs(dx) < 13 && b.cd === 0 && player.vy > 0 && player.y >= top - 4 && player.y <= top + 9) {
-        b.hp--;
-        b.hit = 0.25;
-        b.cd = 0.35;
         player.vy = -190;
         player.y = top - 1;
         player.ground = false;
-        burst(b.x, top, 'line', 8);
-        npcs.flat().forEach((n) => { if (n.joined) n.vy = -110; });
-        if (b.hp <= 0) {
-          b.alive = false;
-          burst(b.x, G - 14, 'yellow', 26);
-          b.beaten.forEach(toast);
-          if (b.reward) {
-            pickups.push({ x: b.x, y: G - 30, label: b.reward.label, got: false, kind: 'diploma', then: b.reward.then });
-          }
-        }
+        hitBoss(b);
       } else if (Math.abs(dx) < 12 && player.y > top + 9) {
         player.x = b.x + Math.sign(dx || -1) * 12;
         if (player.ground) { player.vy = -90; player.ground = false; }
@@ -1002,24 +1154,40 @@ export function startGame(root: HTMLElement, data: GameData) {
     cam = Math.max(0, Math.min(worldEnd - W, cam));
 
     // words
-    while (!current && passive.length && locks === 0) {
-      const next = passive.shift()!;
-      // skip lines whose speaker has scrolled out of view
-      const ax = next.anchor().x;
-      if (ax < cam - 40 || ax > cam + W + 40) continue;
-      current = { el: bubble(next.line, next.anchor), anchor: next.anchor, left: lineTime(next.line) };
+    if (locks === 0) {
+      for (let i = 0; i < passive.length && active.length < 3; i++) {
+        const next = passive[i];
+        const who = next.line.who ?? 'me';
+        if (active.some((a) => a.who === who)) continue;
+        passive.splice(i--, 1);
+        // skip lines whose speaker has scrolled out of view
+        const ax = next.anchor().x;
+        if (ax < cam - 40 || ax > cam + W + 40) continue;
+        // stack bubbles that would sit on top of each other
+        const lift = active.filter((a) => Math.abs(a.anchor().x - ax) < 60).length * 21;
+        active.push({ el: bubble(next.line, next.anchor), anchor: next.anchor, left: lineTime(next.line), who, lift });
+      }
     }
-    if (current) {
-      current.left -= dt;
-      place(current.el, current.anchor);
-      const ax = current.anchor().x;
+    active = active.filter((a) => {
+      a.left -= dt;
+      place(a.el, a.anchor, a.lift);
+      const ax = a.anchor().x;
       const gone = ax < cam - 60 || ax > cam + W + 60;
-      if (current.left <= 0 || locks > 0 || gone) { current.el.remove(); current = null; }
-    }
+      if (a.left <= 0 || locks > 0 || gone) { a.el.remove(); return false; }
+      return true;
+    });
     toastLeft -= dt;
     if (toastLeft <= 0) {
       if (toastQueue.length) {
-        ui.toast.textContent = toastQueue.shift()!;
+        const next = toastQueue.shift()!;
+        ui.toast.textContent = '';
+        if (next.icon && iconURL(next.icon)) {
+          const img = document.createElement('img');
+          img.src = iconURL(next.icon);
+          img.alt = '';
+          ui.toast.append(img);
+        }
+        ui.toast.append(next.msg);
         ui.toast.hidden = false;
         ui.toast.classList.remove('pop'); void ui.toast.offsetWidth; ui.toast.classList.add('pop');
         toastLeft = 2.4;
@@ -1077,11 +1245,18 @@ export function startGame(root: HTMLElement, data: GameData) {
       const sx = th.x - c;
       if (sx > W + 20 || sx + th.w < -60) continue;
       if (th.kind === 'building') S.building(pen, pal, th.type, sx, th.sign ?? '', th.note, t, night);
+      else if (th.type === 'worldmap') S.worldmap(pen, pal, sx, t);
+      else if (th.type === 'rating') S.ratingBoard(pen, pal, sx, rating, ratingGlow);
+      else if (th.type === 'workdesk') S.workdesk(pen, pal, sx, t, th.st.progress ?? 0, th.st.label ?? '');
+      else if (th.type === 'chart') {
+        const k = kiosks.find((q) => q.thing.x > th.x - 2000 && q.thing.x < th.x + 2000);
+        S.chart(pen, pal, sx, k ? delivered / k.total : 0, k?.result ?? '');
+      }
       else if (th.kind === 'prop') {
         const family = th.type === 'familyhome' && npcs.flat().some((n) => n?.inside);
         S.prop(pen, pal, th.type, sx, t, night, { ...th.st, figures: family });
       }
-      else if (th.kind === 'kiosk') S.kiosk(pen, pal, sx, !!th.done, t);
+      else if (th.kind === 'kiosk') S.bankBranch(pen, pal, sx, !!th.done, t, phone);
       else if (th.kind === 'mirror') S.mirrorFrame(pen, pal, sx);
       else if (th.kind === 'sequel') S.sequel(pen, pal, sx, data.sequel.n, data.sequel.poster);
     }
@@ -1098,13 +1273,22 @@ export function startGame(root: HTMLElement, data: GameData) {
       const sx = b.gateX - c;
       if (sx > -30 && sx < W + 30) S.gate(pen, pal, sx, b.gateOpen);
     }
-    // skills
+    // skills float in little badges; rewards float bigger, with a glint going round them
     for (const pk of pickups) {
       if (pk.got) continue;
-      const sx = pk.x - c, bob = Math.round(Math.sin(t * 3 + pk.x) * 1.5);
-      if (sx < -12 || sx > W + 12) continue;
-      if (pk.kind === 'diploma') ctx.drawImage(diploma, Math.round(sx - 6), Math.round(pk.y - 4 + bob));
-      else ctx.drawImage(stars, Math.round(sx - 4), Math.round(pk.y - 4 + bob));
+      const sx = Math.round(pk.x - c), y = Math.round(pk.y + Math.sin(t * 3 + pk.x) * 1.5);
+      if (sx < -16 || sx > W + 16) continue;
+      const img = icons[pk.icon] ?? stars;
+      if (pk.kind === 'reward') {
+        const s2 = pk.icon === 'diploma' ? 1 : 2;
+        ctx.drawImage(img, sx - (img.width * s2) / 2, y - (img.height * s2) / 2, img.width * s2, img.height * s2);
+      } else {
+        pen.c(pal.fill).disc(sx, y, 8);
+        pen.c(pal.line).circle(sx, y, 8);
+        ctx.drawImage(img, sx - 5, y - 5);
+      }
+      const a = t * 4 + pk.x;
+      pen.c(pal.yellow).px(sx + Math.cos(a) * 11, y + Math.sin(a) * 11);
     }
     // bosses and their names
     for (const b of bosses) {
@@ -1157,12 +1341,29 @@ export function startGame(root: HTMLElement, data: GameData) {
       ctx.restore();
     }
     // the player, or the player sitting on the roof
-    const myPose = (moving: boolean) => (hugging.has('me') ? 'hug' : crying.has('me') && !moving ? 'cry' : undefined);
+    const myPose = (moving: boolean) => (hugging.has('me') || attackT > 0 ? 'hug' : crying.has('me') && !moving ? 'cry' : undefined);
     if (player.onRoof) drawPerson(playerLook(), player.onRoof.x - c, player.onRoof.y, player.facing, player.walking, false, playerExtra(), false, player.anim, myPose(player.walking));
     if (!player.hidden) {
       const moving = (Math.abs(player.vx) > 1 && player.ground) || player.walking;
-      drawPerson(playerLook(), player.x - c, player.y, player.facing, moving, !player.ground, playerExtra(), false, player.anim, myPose(moving));
+      if (levelUp && levelUp.t < 1.1 && Math.floor(levelUp.t * 10) % 2) {
+        // the mushroom flicker: big, small, big
+        const f = frames(playerLook(), playerExtra());
+        const img = player.facing === 1 ? f.r.idle : f.l.idle;
+        ctx.drawImage(img, Math.round(player.x - c - img.width * 0.75), Math.round(player.y - img.height * 1.5), img.width * 1.5, img.height * 1.5);
+      } else {
+        drawPerson(playerLook(), player.x - c, player.y, player.facing, moving, !player.ground, playerExtra(), false, player.anim, myPose(moving));
+      }
       if (player.carry) ctx.drawImage(bag, Math.round(player.x - c + (player.facing === 1 ? 3 : -11)), G - 9);
+      if (attackT > 0) {
+        // the swing
+        const fx = player.x - c + player.facing * 10, fy = player.y - 13;
+        pen.c(pal.line);
+        for (let i = 0; i < 7; i++) {
+          const a = -0.9 + i * 0.3;
+          pen.px(fx + player.facing * Math.cos(a) * 7, fy + Math.sin(a) * 7);
+        }
+        pen.c(pal.yellow).px(fx + player.facing * 8, fy);
+      }
     }
 
     // particles
@@ -1170,16 +1371,34 @@ export function startGame(root: HTMLElement, data: GameData) {
       pen.c(pal[q.col]).rect(q.x - c, q.y, q.life > 0.3 ? 2 : 1, q.life > 0.3 ? 2 : 1);
     }
 
-    // a prompt over a door you can go into
+    // a prompt over the door when you are anywhere in front of the building
     if (state === 'play' && locks === 0 && !player.hidden) {
-      const d = doors.find((q) => Math.abs(q.x - player.x) < 13);
+      const d = doorHere();
       if (d) {
-        const sx = d.x - c, y = G - 48 + Math.round(Math.sin(t * 5) * 1.5);
+        const sx = d.x - c, y = d.top - 5 + Math.round(Math.sin(t * 5) * 1.5);
         pen.panel(sx - 8, y - 9, 17, 9, pal.fill, pal.line);
         pen.c(pal.line).text('IN', sx + 1, y - 7, 'center');
         pen.c(pal.line);
         pen.h(sx - 2, sx + 2, y + 1); pen.h(sx - 1, sx + 1, y + 2); pen.px(sx, y + 3);
       }
+    }
+    // the 14 days, counted out big
+    if (grindDay > 0) {
+      pen.c(pal.line);
+      bigText(pen, `DAY ${grindDay}`, W / 2, 26, 3, 'center');
+    }
+    // LEVEL N and its name, stamped in while you flicker
+    if (levelUp) {
+      const k = levelUp.t;
+      const alpha = k < 0.15 ? k / 0.15 : k > 1.3 ? Math.max(0, (1.5 - k) / 0.2) : 1;
+      ctx.globalAlpha = alpha;
+      const pop = k < 0.2 ? Math.round((0.2 - k) * 20) : 0;
+      pen.panel(W / 2 - 70, 22 - pop, 140, levelUp.sub ? 36 : 26, pal.fill, pal.line);
+      pen.c(pal.line);
+      bigText(pen, levelUp.title, W / 2, 26 - pop, 3, 'center');
+      if (levelUp.sub) pen.c(pal.mid).text(levelUp.sub, W / 2, 46 - pop, 'center');
+      ctx.globalAlpha = 1;
+      if (Math.random() < 0.5) particles.push({ x: player.x + (Math.random() - 0.5) * 24, y: player.y - 30 * Math.random(), vx: 0, vy: -40, life: 0.5, col: 'yellow' });
     }
     // where you tapped
     if (target && t - target.set < 0.5) {
@@ -1247,25 +1466,42 @@ export function startGame(root: HTMLElement, data: GameData) {
   }
 
   // ------------------------------------------------------------ loop
+  // The loop sleeps while the game is scrolled out of view or the tab is hidden.
   let last = performance.now();
+  let onScreen = true;
+  let running = false;
   function frame(now: number) {
+    if (!onScreen || document.hidden) { running = false; return; }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     update(dt);
     draw();
     requestAnimationFrame(frame);
   }
+  const wake = () => {
+    if (running || !onScreen || document.hidden) return;
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(frame);
+  };
+  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; wake(); }).observe(root);
+  document.addEventListener('visibilitychange', wake);
   reset();
-  requestAnimationFrame(frame);
+  wake();
 
   // A small hook for automated playtests: /play/?debug
   if (location.search.includes('debug')) {
     (window as unknown as Record<string, unknown>).__game = {
-      get state() { return { shot: shot?.kind ?? null, zoom: Math.round(zoom * 100) / 100, state, x: Math.round(player.x), y: Math.round(player.y), locks, cam: Math.round(cam), skillsGot, totalSkills, delivered, flown, section: currentSection, worldEnd, bosses: bosses.map((b) => ({ x: Math.round(b.x), hp: b.hp, alive: b.alive, gate: b.gateX })) }; },
+      get state() { return { shot: shot?.kind ?? null, zoom: Math.round(zoom * 100) / 100, state, x: Math.round(player.x), y: Math.round(player.y), locks, cam: Math.round(cam), skillsGot, totalSkills, delivered, flown, section: currentSection, worldEnd, view: { ...view }, rating, bosses: bosses.map((b) => ({ x: Math.round(b.x), hp: b.hp, alive: b.alive, gate: b.gateX })) }; },
       teleport(x: number) {
         triggers.forEach((tr) => { if (tr.x < x) tr.fired = true; });
-        if (landing && x >= landing.x0) { flown = true; if (flight) { plane.x = landing.x0 + 200; plane.y = G; } }
+        if (landing && flight) {
+          flown = x >= landing.x0;
+          plane.x = flown ? landing.x0 + 200 : flight.planeX;
+          plane.y = G;
+        }
         passive.length = 0;
+        npcs.forEach((n) => { if (n.joined) { n.joined = false; n.left = true; } });
         player.x = x; player.y = G; cam = x - 110;
       },
       openGates() { bosses.forEach((b) => { if (b.gateX < player.x + 400) { b.alive = false; b.gateOpen = 1; } }); },

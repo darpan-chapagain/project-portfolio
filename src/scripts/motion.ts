@@ -186,7 +186,8 @@ function createHub(area: HTMLElement) {
     const r = area.getBoundingClientRect();
     if (!r.width || !r.height) return;
     box = { left: r.left, top: r.top + window.scrollY, w: r.width, h: r.height };
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // the lines are faint and thin, so 1x resolution is plenty and much cheaper to clear
+    const dpr = 1;
     canvas!.width = Math.round(r.width * dpr);
     canvas!.height = Math.round(r.height * dpr);
     ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -202,8 +203,11 @@ function createHub(area: HTMLElement) {
     });
   }
 
+  let last = 0;
   function draw(t: number, scrollY: number) {
     if (!visible || !box.w) return;
+    if (t - last < 32) return; // 30fps is smooth enough for slow-moving lines
+    last = t;
     const { w, h } = box;
     const offY = box.top - scrollY;
     const recent = performance.now() - pointer.active < 2500;
@@ -216,7 +220,14 @@ function createHub(area: HTMLElement) {
     pos.x += (tx - pos.x) * (inside ? 0.12 : 0.03);
     pos.y += (ty - pos.y) * (inside ? 0.12 : 0.03);
 
-    ctx!.clearRect(0, 0, w, h);
+    // only the part of the canvas that is on screen gets cleared and drawn
+    const vy0 = Math.max(0, -offY), vy1 = Math.min(h, window.innerHeight - offY);
+    if (vy1 <= vy0) return;
+    ctx!.clearRect(0, vy0 - 2, w, vy1 - vy0 + 4);
+    ctx!.save();
+    ctx!.beginPath();
+    ctx!.rect(0, vy0, w, vy1 - vy0);
+    ctx!.clip();
     const pts = anchors.map((a) => [a.left + a.w / 2 + a.x - box.left, a.top + a.h / 2 + a.y - box.top]);
     const diag = Math.hypot(w, h);
     ctx!.lineWidth = 0.7;
@@ -246,6 +257,7 @@ function createHub(area: HTMLElement) {
     ctx!.beginPath();
     ctx!.arc(pos.x, pos.y, 8 + Math.sin(t * 0.004) * 1.5, 0, Math.PI * 2);
     ctx!.stroke();
+    ctx!.restore();
   }
 
   return { measure: measureHub, draw };
@@ -254,6 +266,23 @@ function createHub(area: HTMLElement) {
 const hubs = Array.from(document.querySelectorAll<HTMLElement>('[data-sky]'))
   .map(createHub)
   .filter((h): h is NonNullable<ReturnType<typeof createHub>> => h !== null);
+
+/* ---------- Wobble only what you can see, and never while scrolling ---------- */
+const wobblers = Array.from(document.querySelectorAll<HTMLElement>('.torn, .doodle, .frame'));
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) e.target.classList.toggle('off', !e.isIntersecting);
+  }, { rootMargin: '120px 0px' });
+  wobblers.forEach((el) => { el.classList.add('off'); io.observe(el); });
+}
+let scrollIdle = 0;
+window.addEventListener('scroll', () => {
+  document.documentElement.classList.add('scrolling');
+  clearTimeout(scrollIdle);
+  scrollIdle = window.setTimeout(() => document.documentElement.classList.remove('scrolling'), 160);
+}, { passive: true });
+
+const lite = document.documentElement.classList.contains('lite');
 
 /* ---------- The loop ---------- */
 function frame(t: number) {
@@ -274,7 +303,7 @@ function frame(t: number) {
     it.y = y;
     it.el.style.translate = `${x.toFixed(2)}px ${y.toFixed(2)}px`;
   }
-  for (const h of hubs) h.draw(t, sy);
+  if (!lite) for (const h of hubs) h.draw(t, sy);
   requestAnimationFrame(frame);
 }
 

@@ -44,6 +44,10 @@ const nav = [
         if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         d.dataset.theme = t;
         d.classList.add('js');
+        // Low-end devices and data savers get a lighter page: no wobbling paper or ink.
+        var cores = navigator.hardwareConcurrency || 8, mem = navigator.deviceMemory || 8;
+        var save = navigator.connection && navigator.connection.saveData;
+        if (cores <= 4 || mem <= 2 || save) d.classList.add('lite');
       })();
     </script>
   </head>
