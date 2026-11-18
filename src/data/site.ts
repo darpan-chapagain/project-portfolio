@@ -126,8 +126,8 @@ export const education = [
 
 // Add a url to show a "verify" link next to a certificate.
 export const certifications: { name: string; issuer: string; url?: string }[] = [
-  { name: 'AI Product Manager Professional Certificate', issuer: 'IBM, 2026', url: 'https://www.coursera.org/account/accomplishments/specialization/BQM3E0YK87C5' },
-  { name: 'Agile Project Management', issuer: 'Google, on Coursera', url: 'https://coursera.org/verify/MWUPJFA6H3P2' },
+  { name: 'Product Manager Professional Certificate', issuer: 'IBM, 2026', url: 'https://www.coursera.org/account/accomplishments/specialization/BQM3E0YK87C5' },
+  { name: 'Agile Project Management', issuer: 'Google, on Coursera', url: 'https://www.coursera.org/account/accomplishments/verify/MWUPJFA6H3P2' },
   { name: 'AI Essentials', issuer: 'Google, 2024', url: 'https://www.coursera.org/account/accomplishments/verify/E62F7CW6MAGQ' },
   { name: 'Scrum Master Training', issuer: 'Proshore' },
   { name: 'PHP Development Training', issuer: 'Proshore' },
