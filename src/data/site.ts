@@ -124,11 +124,12 @@ export const education = [
   },
 ];
 
-export const certifications = [
-  'IBM AI Product Manager Professional Certificate',
-  'Google Agile Project Management (Coursera)',
-  'Scrum Master Training (Proshore)',
-  'PHP Development Training (Proshore)',
+// Add a url to show a "verify" link next to a certificate.
+export const certifications: { name: string; issuer: string; url?: string }[] = [
+  { name: 'AI Product Manager Professional Certificate', issuer: 'IBM' },
+  { name: 'Agile Project Management', issuer: 'Google, on Coursera' },
+  { name: 'Scrum Master Training', issuer: 'Proshore' },
+  { name: 'PHP Development Training', issuer: 'Proshore' },
 ];
 
 // The three projects on the home page, each with the line that sells it.

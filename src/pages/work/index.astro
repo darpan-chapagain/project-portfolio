@@ -98,9 +98,10 @@ let n = 0;
       <h1 class="display echo">Projects</h1>
       <p class="intro">
         {projects.length} things I've shipped or built, set out like my resume: {industry} in industry, {projects.length - industry} on my own.
-        Open any line for the problem, how it was built and what changed. Skills, education and awards are at the end.
+        Open any line for the problem, how it was built and what changed.
       </p>
 
+      <div class="bar">
       <div class="filters" role="toolbar" aria-label="Filter projects">
         {groups.map((g, i) => (
           <button type="button" class:list={['chip', { on: i === 0 }]} data-filter={g.id} aria-pressed={i === 0 ? 'true' : 'false'}>
@@ -108,6 +109,11 @@ let n = 0;
             <svg class="squiggle" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M2 6 C18 1 30 9 46 5 S78 2 98 6" pathLength="1" /></svg>
           </button>
         ))}
+      </div>
+      <nav class="jumps" aria-label="Jump to">
+        <a class="jump" href="#education">Education <span aria-hidden="true">↓</span></a>
+        <a class="jump" href="#certifications">Certifications <span aria-hidden="true">↓</span></a>
+      </nav>
       </div>
     </div>
   </section>
@@ -182,7 +188,7 @@ let n = 0;
       </section>
 
       <div class="two">
-        <section class="part" aria-labelledby="part-edu">
+        <section class="part" id="education" aria-labelledby="part-edu">
           <h2 id="part-edu" class="part-title display">Education</h2>
           <ul class="edu">
             {education.map((e) => (
@@ -194,9 +200,16 @@ let n = 0;
             ))}
           </ul>
         </section>
-        <section class="part" aria-labelledby="part-certs">
+        <section class="part" id="certifications" aria-labelledby="part-certs">
           <h2 id="part-certs" class="part-title display">Certifications</h2>
-          <ul class="certs">{certifications.map((c) => <li>{c}</li>)}</ul>
+          <ul class="certs">
+            {certifications.map((c) => (
+              <li>
+                <span class="cert-name">{c.name}</span>
+                <span class="cert-by">{c.issuer}{c.url && <> <a class="verify hand" href={c.url}>verify</a></>}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       </div>
     </article>
@@ -278,7 +291,15 @@ let n = 0;
   h1 { font-size: clamp(5rem, 15vw, 11rem); }
   .intro { max-width: 52ch; color: var(--chalk); margin: 1rem 0 2.2rem; }
 
+  .bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.4rem 1.6rem; }
   .filters { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; }
+  /* Jumps to the resume's own sections, set apart from the filters by a rule. */
+  .jumps { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; padding-left: 1.6rem; border-left: 1px solid rgb(var(--chalk-rgb) / 0.3); }
+  .jump { display: inline-block; padding: 0.3rem 0 0.7rem; font-size: var(--s-16); color: var(--paper-dim); text-decoration: none; transition: color 250ms ease; }
+  .jump span { font-family: var(--hand); }
+  .jump:hover { color: var(--paper); text-decoration: underline; }
+  #education, #certifications { scroll-margin-top: 6rem; }
+  @media (max-width: 760px) { .jumps { padding-left: 0; border-left: 0; } }
   .chip {
     position: relative;
     padding: 0.3rem 0 0.7rem;
@@ -390,7 +411,10 @@ let n = 0;
   .edu p { margin: 0; }
   .degree { font-weight: 680; }
   .muted { color: rgb(var(--card-ink-rgb) / 0.68); }
-  .certs li { padding-block: 0.4rem; border-top: 1px solid rgb(var(--card-ink-rgb) / 0.14); }
+  .certs li { display: grid; padding-block: 0.4rem; border-top: 1px solid rgb(var(--card-ink-rgb) / 0.14); }
+  .cert-name { font-weight: 680; }
+  .cert-by { color: rgb(var(--card-ink-rgb) / 0.68); }
+  .verify { margin-left: 0.4rem; font-size: 1.08em; color: var(--card-ink); }
   .certs li:first-child { border-top: 0; padding-top: 0; }
   .honours { padding-top: clamp(3.5rem, 8vw, 6rem); }
   @media (max-width: 860px) {
