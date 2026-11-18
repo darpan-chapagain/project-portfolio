@@ -135,7 +135,7 @@ export const script: Record<string, LevelScript> = {
     scene: 'remote',
     length: 1460,
     building: { type: 'homeoffice', at: 70, sign: 'PROSHORE', note: 'SHOPIFY APPS' },
-    rating: 4.6,
+    rating: 4.5,
     props: [
       { type: 'worldmap', at: 190 },
       { type: 'workdesk', at: 440 },
@@ -189,7 +189,7 @@ export const script: Record<string, LevelScript> = {
     reward: { item: 'trophy', label: 'Key Contributor Award', then: [{ text: '14 straight days to bring it back.', icon: 'clock' }] },
     card: [
       'Shopify apps for sellers in the US, Europe, Asia and Australia. I started in support, so I heard what sellers needed first, and took it to the team.',
-      'Feature by feature, the rating went from 4.6 to 4.8. Then a company-wide outage took fourteen straight days to bring back, and earned me a Key Contributor Award.',
+      'Feature by feature, the rating went from 4.5 to 4.8. Then a company-wide outage took fourteen straight days to bring back, and earned me a Key Contributor Award.',
     ],
   },
 
