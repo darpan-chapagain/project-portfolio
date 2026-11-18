@@ -47,7 +47,7 @@ const nav = [
         // Low-end devices and data savers get a lighter page: no wobbling paper or ink.
         var cores = navigator.hardwareConcurrency || 8, mem = navigator.deviceMemory || 8;
         var save = navigator.connection && navigator.connection.saveData;
-        if (cores <= 4 || mem <= 2 || save) d.classList.add('lite');
+        if (cores <= 2 || mem <= 2 || save) d.classList.add('lite');
       })();
     </script>
   </head>

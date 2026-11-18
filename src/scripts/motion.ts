@@ -281,8 +281,6 @@ window.addEventListener('scroll', () => {
   scrollIdle = window.setTimeout(() => document.documentElement.classList.remove('scrolling'), 160);
 }, { passive: true });
 
-const lite = document.documentElement.classList.contains('lite');
-
 /* ---------- The loop ---------- */
 function frame(t: number) {
   lenis?.raf(t);
@@ -302,7 +300,8 @@ function frame(t: number) {
     it.y = y;
     it.el.style.translate = `${x.toFixed(2)}px ${y.toFixed(2)}px`;
   }
-  if (!lite) for (const h of hubs) h.draw(t, sy);
+  // The cursor lines stay on in lite mode too: they're cheap and only draw while the mouse moves.
+  for (const h of hubs) h.draw(t, sy);
   requestAnimationFrame(frame);
 }
 
