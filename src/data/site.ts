@@ -30,6 +30,8 @@ export type Role = {
   highlights: string[];
   /** Role changes inside one company, oldest first. */
   steps?: { title: string; when: string }[];
+  /** One number for the career line on the home page. */
+  headline: string;
   projects: string[];
 };
 
@@ -40,6 +42,7 @@ export const roles: Role[] = [
     company: 'AMNIL Technologies',
     place: 'Kathmandu, hybrid',
     titles: ['Technical Project Manager'],
+    headline: 'Account opening cut from <strong>3 days to under 1 hour</strong>',
     summary:
       'Led delivery of 5+ enterprise banking products from backlog to production, with backend, frontend, QA, design and DevOps on the team.',
     highlights: [
@@ -64,6 +67,7 @@ export const roles: Role[] = [
     company: 'F1Soft International',
     place: 'Kathmandu, onsite',
     titles: ['Project Manager'],
+    headline: 'Mobile banking for <strong>16 banks</strong> and <strong>100,000+</strong> users',
     summary:
       'Ran mobile and internet banking delivery for 16 financial institutions at once, each with its own compliance rules, branding and core banking system.',
     highlights: [
@@ -80,6 +84,7 @@ export const roles: Role[] = [
     company: 'Proshore (Digital Product Labs)',
     place: 'Remote, for a US client',
     titles: ['Tech Support Team Lead', 'Scrum Master'],
+    headline: 'Customer replies cut from <strong>12 hours to 45 minutes</strong>',
     summary:
       'SaaS that keeps Shopify, Etsy, WooCommerce, Amazon and eBay stores in sync. Started out fixing bugs in PHP, ended up leading the support team.',
     steps: [
@@ -126,7 +131,7 @@ export const certifications = [
   'PHP Development Training (Proshore)',
 ];
 
-// Little ticket stubs on the home page.
+// Little ticket stubs on the Work page.
 export const recognition = [
   { year: '2022', title: 'Key Contributor Award', where: 'Digital Product Labs', note: 'Fourteen straight days with the team, bringing back a company-wide sync outage.' },
   { year: '2023', title: 'Speaker', where: 'Proshore knowledge sharing', note: 'Talk to an international audience on Hotjar and analytics-driven UX.', link: 'https://proshore.eu/kss-level-up-website-with-hotjar/' },
@@ -134,7 +139,7 @@ export const recognition = [
   { year: '2026', title: 'Vice Secretary', where: 'Nepal Student Association, Wright State', note: 'Also community service chair. Events, outreach and coordination.' },
 ];
 
-// Each note becomes a yellow sticky note on the home page.
+// Each note becomes a yellow sticky note on the How I build page, and a skills line on the Work page.
 export const toolkit = [
   { heading: 'Product', items: 'User stories, backlogs, sprint planning, Scrum and LeSS, BRDs and SRS docs, KPIs' },
   { heading: 'Banking', items: 'Core banking integrations, maker-checker flows, CDD and ECDD compliance' },

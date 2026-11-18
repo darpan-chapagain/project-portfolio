@@ -252,3 +252,31 @@ html.scrolling .torn, html.scrolling .doodle .ink, html.scrolling .frame.is-on {
   .js .echo:not(.is-in) { opacity: 1; }
   .torn, .doodle .ink { animation: none !important; }
 }
+
+/* A yellow sticky note: the toolkit wall and the contact note. */
+.postit {
+  position: relative;
+  background: var(--postit);
+  color: var(--postit-ink);
+  padding: 1.1rem 1.1rem 1.4rem;
+  transform: rotate(var(--r, -2deg));
+  transform-origin: 50% 0;
+  box-shadow: 0 14px 18px -12px var(--shadow-soft);
+  font-size: var(--s-18);
+  line-height: 1.35;
+  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 380ms ease;
+  will-change: translate;
+}
+/* the bottom corner lifts a little, like a real sticky note */
+.postit::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, rgb(0 0 0 / 0) 50%, rgb(0 0 0 / 0.12) 50%, rgb(255 255 255 / 0.25) 100%);
+  transition: width 380ms ease, height 380ms ease;
+}
+.postit:hover { transform: rotate(calc(var(--r, -2deg) * -0.6)) translateY(-6px) scale(1.03); box-shadow: 0 26px 26px -16px var(--shadow-soft); }
+.postit:hover::after { width: 34px; height: 34px; }

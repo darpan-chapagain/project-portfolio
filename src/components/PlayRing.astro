@@ -2,6 +2,12 @@
 import Doodle from './Doodle.astro';
 import Sky from './Sky.astro';
 
+interface Props {
+  /** A smaller ring with less padding, for the end of the home page. */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
 const R = 150;
 const C = 2 * Math.PI * R;
 const phrase = 'PLAY MY JOURNEY ✦ PLAY MY JOURNEY ✦';
@@ -17,7 +23,7 @@ const pixels = [
   '################',
 ];
 ---
-<section id="play" class="play has-sky" aria-labelledby="play-title">
+<section id="play" class:list={['play has-sky', { compact }]} aria-labelledby="play-title">
   <Sky
     roomy
     items={[
@@ -121,6 +127,8 @@ const pixels = [
     padding-inline: var(--gutter);
   }
   .ring-link { display: block; width: clamp(300px, 46vw, 520px); border-radius: 50%; }
+  .compact { padding-block: clamp(3rem, 6vw, 4.5rem); gap: 1rem; }
+  .compact .ring-link { width: clamp(240px, 30vw, 340px); }
   .ring { width: 100%; height: auto; overflow: visible; color: var(--paper); }
   .ring-text { font-family: var(--display); font-size: 64px; fill: var(--paper); }
   .spin { transform-origin: 0 0; animation: spin 40s linear infinite; }

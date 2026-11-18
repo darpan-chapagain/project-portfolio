@@ -1,0 +1,94 @@
+---
+// The whole working board, with what each column means, and the toolkit underneath.
+import Base from '../layouts/Base.astro';
+import Sky from '../components/Sky.astro';
+import Doodle from '../components/Doodle.astro';
+import ProductBoard from '../components/ProductBoard.astro';
+import Toolkit from '../components/Toolkit.astro';
+import { board } from '../data/site';
+
+const cards = board.reduce((n, c) => n + c.cards.length, 0);
+const notes: Record<string, string> = {
+  Listen: 'Start where customers feel the pain. A support queue or a three-day wait tells you more than a roadmap does.',
+  Decide: 'Choose what goes first, then say no to the rest. Sixteen banks can share one backlog when the order is clear.',
+  Build: 'Make it hold under real load. A payroll run posts in full or halts. Nothing half-done reaches a customer.',
+  Ship: 'Ship it, then prove it with numbers: delivery rates, reconciled record counts, cost before scale.',
+};
+---
+<Base title="How I build" description="My working board: Listen, Decide, Build, Ship. Every card is a rule I picked up on a real product, linked to the project it came from.">
+  <section class="head has-sky">
+    <Sky
+      roomy
+      items={[
+        { art: 'kanban', x: 78, y: 40, w: 130, depth: 0.7, rot: -4 },
+        { art: 'card', x: 92, y: 74, w: 96, depth: 1, speed: -0.05, rot: 8 },
+      ]}
+      stars={[{ x: 70, y: 18 }, { x: 96, y: 30 }, { x: 64, y: 82 }]}
+    />
+    <div class="wrap">
+      <h1 class="display echo">How I build</h1>
+      <p class="intro">
+        My working board. Four columns, {cards} cards. Every card is a rule I picked up on a real product,
+        and each one opens the project it came from.
+      </p>
+    </div>
+  </section>
+
+  <section class="wrap" aria-label="What each column means">
+    <ol class="steps">
+      {board.map((col, i) => (
+        <li style={`--i:${i}`}>
+          <h2 class="step-name hand">{col.column} <span>{col.hint}</span></h2>
+          <p>{notes[col.column]}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="wrap board-wrap" aria-label="The board">
+    <ProductBoard />
+  </section>
+
+  <section class="section wrap kit" aria-labelledby="kit-title">
+    <div class="section-head" data-speed="-0.04">
+      <h2 id="kit-title" class="display">Toolkit</h2>
+      <p>What I reach for, from the backlog to the database.</p>
+    </div>
+    <Toolkit />
+  </section>
+
+  <section class="wrap next" aria-label="Where to go next">
+    <a class="next-link" href="/work/">
+      <span class="hand">See the projects these came from</span>
+      <Doodle name="arrow" class="next-arrow" />
+    </a>
+    <a class="next-link" href="/journey/">
+      <span class="hand">Or read the journey behind them</span>
+      <Doodle name="arrow" class="next-arrow" />
+    </a>
+  </section>
+</Base>
+
+<style>
+  .head { padding: clamp(8rem, 14vw, 10rem) 0 2rem; }
+  h1 { font-size: clamp(4.5rem, 13vw, 10rem); }
+  .intro { max-width: 52ch; color: var(--chalk); margin: 1rem 0 0; }
+
+  .steps { list-style: none; margin: 1rem 0 2.5rem; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem 2rem; }
+  .steps li { border-top: 1px solid rgb(var(--chalk-rgb) / 0.22); padding-top: 0.9rem; }
+  .step-name { margin: 0 0 0.35rem; font-size: var(--s-24); font-weight: 700; color: var(--paper); line-height: 1.15; }
+  .step-name span { display: block; font-size: var(--s-16); font-weight: 400; color: var(--paper-dim); }
+  .steps p { margin: 0; font-size: var(--s-16); color: var(--chalk); max-width: 34ch; }
+
+  .board-wrap { padding-bottom: 1rem; }
+
+  .next { display: grid; gap: 0.6rem; padding-bottom: clamp(4rem, 8vw, 6rem); }
+  .next-link { display: inline-flex; align-items: center; gap: 0.8rem; justify-self: start; font-size: var(--s-24); text-decoration: none; color: var(--paper); }
+  .next-link .hand { border-bottom: 1px dashed var(--chalk-2); line-height: 1.25; }
+  .next-link :global(.next-arrow) { width: 64px; transition: transform 400ms var(--ease); }
+  .next-link:hover :global(.next-arrow) { transform: translateX(8px) rotate(-4deg); }
+  .next-link:hover .hand { border-bottom-color: var(--paper); }
+
+  @media (max-width: 1000px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; gap: 1.1rem; } }
+</style>

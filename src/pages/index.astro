@@ -7,11 +7,13 @@ import ContactSheet from '../components/ContactSheet.astro';
 import Doodle from '../components/Doodle.astro';
 import Sky from '../components/Sky.astro';
 import ProductBoard from '../components/ProductBoard.astro';
-import { person, roles, education, certifications, toolkit, clients, recognition } from '../data/site';
+import { person, roles, education, clients } from '../data/site';
 
+// The home page is the trailer. Each section shows a little and links to the full version.
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
-const featured = projects.filter((p) => p.data.featured);
-const shortOf = (id: string) => projects.find((p) => p.id === id)?.data.short ?? '';
+const featured = projects.filter((p) => p.data.featured).slice(0, 3);
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const masters = education[0];
 
 const posts = (await getCollection('writing', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
@@ -20,54 +22,36 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
 ---
 <Base>
   <Hero />
-  <PlayRing />
 
-  <section class="section how wrap" aria-labelledby="how">
-    <div class="section-head" data-speed="-0.04">
-      <h2 id="how" class="display">How I build</h2>
-      <p>My working board. Every card is a rule I picked up on a real product. Open one to see where it came from.</p>
-    </div>
-    <ProductBoard />
-  </section>
-
-  <section id="experience" class="section has-sky" aria-labelledby="exp">
+  <section id="experience" class="section career-sec has-sky" aria-labelledby="exp">
     <Sky
       items={[
-        { art: 'kanban', x: 89, y: 30, w: 120, depth: 0.7 },
-        { art: 'card', x: 90, y: 74, w: 100, depth: 1, speed: -0.05, rot: -9 },
+        { art: 'card', x: 84, y: 88, w: 100, depth: 1, speed: -0.03, rot: -9 },
       ]}
-      stars={[{ x: 92, y: 14 }, { x: 96, y: 52 }, { x: 86, y: 92 }, { x: 4, y: 70 }]}
+      stars={[{ x: 92, y: 8 }, { x: 70, y: 94 }, { x: 4, y: 70 }]}
     />
     <div class="wrap">
-    <div class="section-head" data-speed="-0.04">
-      <h2 id="exp" class="display">Experience</h2>
-      <p>Four years in software. First, Shopify apps for Digital Product Labs, a US client. Five are still live on the App Store. Then banking products for 16+ financial institutions in Kathmandu.</p>
-    </div>
-    <ol class="roles" data-reveal>
-      {roles.map((r, i) => (
-        <li class="role" style={`--i:${i}`}>
-          <div class="when-col">
-            <p class="when">{r.start} to {r.end}</p>
-            <p class="place">{r.place}</p>
-          </div>
-          <div class="role-main">
-            <h3>{r.company}</h3>
-            <p class="titles">{r.titles.join(' and ')}</p>
-            {r.steps && (
-              <ol class="steps" aria-label="Roles over time">
-                {r.steps.map((st) => <li><span class="dot"></span><span class="st-title">{st.title}</span><span class="st-when">{st.when}</span></li>)}
-              </ol>
-            )}
-            <p class="summary">{r.summary}</p>
-            <ul class="wins">{r.highlights.map((h) => <li set:html={h} />)}</ul>
-            <p class="proj">
-              <span class="hand">Projects:</span>
-              {r.projects.map((id, k) => <>{k > 0 && ', '}<a href={`/work/${id}/`}>{shortOf(id)}</a></>)}
-            </p>
-          </div>
-        </li>
-      ))}
-    </ol>
+      <div class="section-head" data-speed="-0.04">
+        <h2 id="exp" class="display">Experience</h2>
+        <p>Four years in software. Shopify apps for a US client first, then banking products for 16+ institutions in Kathmandu.</p>
+      </div>
+      <ol class="career" data-reveal>
+        {roles.map((r, i) => (
+          <li class="row" style={`--i:${i}`}>
+            <p class="when">{r.start.split(' ')[1]} to {r.end.split(' ')[1]}</p>
+            <div class="who">
+              <h3><a class="stretch" href={`/work/#${slug(r.company)}`}>{r.company}</a></h3>
+              <p class="titles">{r.titles.join(' and ')}</p>
+            </div>
+            <p class="headline" set:html={r.headline} />
+          </li>
+        ))}
+      </ol>
+      <p class="creds">{masters.degree}, {masters.school}. {education[1].degree}. IBM AI Product Manager certified.</p>
+      <a class="all-link" href="/work/">
+        <span class="hand">Full resume and all {projects.length} projects</span>
+        <Doodle name="arrow" class="all-arrow" />
+      </a>
     </div>
   </section>
 
@@ -82,11 +66,23 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     </div>
   </section>
 
+  <section class="section how wrap" aria-labelledby="how">
+    <div class="section-head" data-speed="-0.04">
+      <h2 id="how" class="display">How I build</h2>
+      <p>One card from each column of my working board. Every card is a rule I picked up on a real product.</p>
+    </div>
+    <ProductBoard limit={1} />
+    <a class="all-link" href="/how-i-build/">
+      <span class="hand">See the whole board</span>
+      <Doodle name="arrow" class="all-arrow" />
+    </a>
+  </section>
+
   <section id="work" class="section work" aria-labelledby="work-title">
     <div class="wrap">
       <div class="section-head" data-speed="-0.04">
         <h2 id="work-title" class="display">Selected work</h2>
-        <p>Six of the twelve. Pick a frame to read how it was built. Client work is described at the architecture level, with no client code.</p>
+        <p>Three of the {projects.length}. Pick a frame to read how it was built.</p>
       </div>
       <ContactSheet items={featured} label="Selected projects" />
       <a class="all-link" href="/work/">
@@ -96,92 +92,37 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
     </div>
   </section>
 
-  <section class="section wrap kit" aria-labelledby="kit-title">
-    <div class="section-head" data-speed="-0.04">
-      <h2 id="kit-title" class="display">Toolkit</h2>
-      <p>What I reach for, from the backlog to the database.</p>
-    </div>
-    <ul class="notes-wall" data-reveal>
-      {toolkit.map((t, i) => (
-        <li class="postit hand" style={`--r:${[-3, 2, -1.5, 3, -2.5, 1.5, 2.5, -2][i % 8]}deg;--i:${i}`} data-speed={[0.03, -0.02, 0.05, -0.04, 0.02, -0.03, 0.04, -0.02][i % 8]}>
-          <strong>{t.heading}</strong>
-          <span>{t.items}</span>
-        </li>
-      ))}
-    </ul>
+  <PlayRing compact />
 
-    <div class="edu">
-      <div>
-        <h3 class="edu-h">Education</h3>
-        <ul class="edu-list">
-          {education.map((e) => (
+  {posts.length > 0 && (
+    <section class="section reading has-sky" aria-labelledby="reading-title">
+      <Sky
+        items={[
+          { art: 'tea', x: 74, y: 58, w: 80, depth: 0.8 },
+          { art: 'lamp', x: 90, y: 62, w: 54, depth: 0.5, speed: 0.04 },
+        ]}
+        stars={[{ x: 62, y: 76 }, { x: 84, y: 90 }, { x: 96, y: 46 }]}
+      />
+      <div class="wrap">
+        <div class="section-head" data-speed="-0.04">
+          <h2 id="reading-title" class="display">Reading pile</h2>
+          <p>Book reviews and notes on building software.</p>
+        </div>
+        <ul class="post-list">
+          {posts.map((p) => (
             <li>
-              <p class="degree">{e.degree}</p>
-              <p>{e.school}, {e.place}</p>
-              <p class="muted">{e.when}{e.detail && `. ${e.detail}`}</p>
+              <a href={`/writing/${p.id}/`}>{p.data.title}</a>
+              <p class="muted">{fmt(p.data.date)}{p.data.book && `. Review of ${p.data.book.title} by ${p.data.book.author}`}</p>
             </li>
           ))}
         </ul>
+        <a class="all-link" href="/writing/">
+          <span class="hand">Everything I've written</span>
+          <Doodle name="arrow" class="all-arrow" />
+        </a>
       </div>
-      <div>
-        <h3 class="edu-h">Certifications</h3>
-        <ul class="cert-list">{certifications.map((c) => <li>{c}</li>)}</ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section wrap honours" aria-labelledby="honours-title">
-    <div class="section-head" data-speed="-0.04">
-      <h2 id="honours-title" class="display">Along the way</h2>
-      <p>An award, a talk, some mentoring and a bit of community work.</p>
-    </div>
-    <ul class="stubs" data-reveal>
-      {recognition.map((r, i) => (
-        <li class="stub-wrap paper-shadow" style={`--i:${i};--r:${[-1.2, 0.9, 1.1, -0.8][i]}deg`}>
-          <div class="stub">
-            <span class="year display">{r.year}</span>
-            <span class="stub-body">
-              <span class="stub-title">{r.title}</span>
-              <span class="stub-where">{r.where}</span>
-              <span class="stub-note">{r.note}</span>
-              {r.link && <a class="stub-link hand" href={r.link}>see the talk</a>}
-            </span>
-          </div>
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section class="section reading has-sky" aria-labelledby="reading-title">
-    <Sky
-      items={[
-        { art: 'tea', x: 74, y: 58, w: 80, depth: 0.8 },
-        { art: 'lamp', x: 90, y: 62, w: 54, depth: 0.5, speed: 0.04 },
-      ]}
-      stars={[{ x: 62, y: 76 }, { x: 84, y: 90 }, { x: 96, y: 46 }]}
-    />
-    <div class="wrap">
-    <div class="section-head" data-speed="-0.04">
-      <h2 id="reading-title" class="display">Reading pile</h2>
-      <p>Book reviews and notes on building software.</p>
-    </div>
-    {posts.length > 0 ? (
-      <ul class="post-list">
-        {posts.map((p) => (
-          <li>
-            <a href={`/writing/${p.id}/`}>{p.data.title}</a>
-            <p class="muted">{fmt(p.data.date)}{p.data.book && `. Review of ${p.data.book.title} by ${p.data.book.author}`}</p>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <div class="empty">
-        <div data-speed="-0.06" data-depth="0.4"><Doodle name="book" class="empty-art" /></div>
-        <p>The first review is still being written. In the meantime, <a href={person.linkedin}>follow me on LinkedIn</a> and you'll see it when it lands.</p>
-      </div>
-    )}
-    </div>
-  </section>
+    </section>
+  )}
 
   <section id="contact" class="section contact has-sky" aria-labelledby="contact-title">
     <Sky
@@ -204,53 +145,31 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
 </Base>
 
 <style>
-  /* Experience */
-  .roles { list-style: none; margin: 0; padding: 0; }
-  .role {
+  /* Experience as one line per company */
+  .career-sec { padding-bottom: clamp(2.5rem, 6vw, 4rem); }
+  .career { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid rgb(var(--chalk-rgb) / 0.2); }
+  .row {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
-    gap: 1.5rem;
-    padding-block: 2.2rem;
-  }
-  /* The rule above each role draws itself in as it arrives. */
-  .role::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
+    grid-template-columns: 9rem minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 0.4rem 2rem;
+    align-items: baseline;
+    padding-block: 1.3rem;
     border-top: 1px solid rgb(var(--chalk-rgb) / 0.2);
-    transform-origin: left;
   }
-  .role:last-child { border-bottom: 1px solid rgb(var(--chalk-rgb) / 0.2); }
-  .js .roles:not(.is-in) .role::before { transform: scaleX(0); }
-  .js .roles:not(.is-in) .role > * { opacity: 0; }
-  .roles.is-in .role::before { animation: rule-in 900ms var(--ease) backwards; animation-delay: calc(var(--i) * 160ms); }
-  .roles.is-in .role > * { animation: rise 800ms var(--ease) backwards; animation-delay: calc(var(--i) * 160ms + 150ms); }
-  @keyframes rule-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .when { margin: 0; color: var(--paper-dim); font-size: var(--s-16); }
+  .who h3 { margin: 0; font-family: var(--display); text-transform: uppercase; font-size: clamp(1.9rem, 3vw, 2.5rem); line-height: 1; }
+  .who a { color: var(--paper); text-decoration: none; }
+  .stretch::after { content: ''; position: absolute; inset: 0; }
+  .titles { margin: 0.25rem 0 0; color: var(--paper-dim); font-size: var(--s-16); }
+  .headline { margin: 0; color: var(--chalk); font-size: var(--s-16); }
+  .headline :global(strong) { color: var(--paper); font-weight: 650; }
+  .row:hover h3 a { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.12em; }
+  .row:has(a:focus-visible) { outline: 2px solid var(--paper); outline-offset: 4px; }
+  .js .career:not(.is-in) .row { opacity: 0; }
+  .career.is-in .row { animation: rise 800ms var(--ease) backwards; animation-delay: calc(var(--i) * 140ms); }
   @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-
-  .when { margin: 0.45rem 0 0; color: var(--paper); font-size: var(--s-16); }
-  .place { margin: 0.1rem 0 0; color: var(--paper-dim); font-size: var(--s-14); }
-  .role h3 { font-family: var(--display); text-transform: uppercase; font-size: clamp(2.2rem, 3.6vw, 2.9rem); line-height: 1; }
-  .titles { margin: 0.35rem 0 0; font-weight: 600; }
-  .summary { margin: 0.8rem 0 0.7rem; max-width: var(--measure); color: var(--chalk); }
-  .wins { margin: 0; padding-left: 1.1rem; max-width: var(--measure); font-size: var(--s-16); color: var(--chalk); }
-  .wins li + li { margin-top: 0.35rem; }
-  .wins :global(strong) { color: var(--paper); font-weight: 650; }
-  .proj { margin: 0.9rem 0 0; font-size: var(--s-14); color: var(--paper-dim); }
-  .proj .hand { font-size: 1.15em; margin-right: 0.3rem; color: var(--paper); }
-  .proj a { color: var(--paper-dim); }
-  .proj a:hover { color: var(--paper); }
-
-  /* Role changes inside one company, as a small track. */
-  .steps { list-style: none; margin: 0.9rem 0 0.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 0; position: relative; }
-  .steps li { position: relative; display: grid; gap: 0.05rem; padding: 0 1.6rem 0 1.1rem; font-size: var(--s-14); }
-  .steps li::after { content: ''; position: absolute; left: 0.3rem; right: 0.4rem; top: 0.62rem; border-top: 1px dashed rgb(var(--chalk-rgb) / 0.35); z-index: -1; }
-  .steps li:last-child::after { display: none; }
-  .steps .dot { position: absolute; left: 0; top: 0.36rem; width: 0.55rem; height: 0.55rem; border-radius: 50%; border: 1.5px solid var(--paper); background: var(--ink); }
-  .steps li:last-child .dot { background: var(--paper); }
-  .st-title { color: var(--paper); }
-  .st-when { color: var(--paper-dim); font-size: 0.92em; }
+  .creds { margin: 1.3rem 0 0; color: var(--paper-dim); font-size: var(--s-16); max-width: 70ch; }
 
   /* Banks marquee */
   .clients { padding: 1.2rem 0 2.2rem; overflow: hidden; }
@@ -267,6 +186,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .track :global(.sep) { width: 14px; color: var(--chalk-2); }
   @keyframes drift-x { to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) {
+    .js .career:not(.is-in) .row { opacity: 1; }
     .track { animation: none; flex-wrap: wrap; width: auto; padding-inline: var(--gutter); }
     .track li[aria-hidden='true'] { display: none; }
   }
@@ -287,86 +207,8 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .all-link:hover :global(.all-arrow) { transform: translateX(8px) rotate(-4deg); }
   .all-link:hover .hand { border-bottom-color: var(--paper); }
 
-  /* Toolkit */
-  .notes-wall { list-style: none; margin: 0 0 4.5rem; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.8rem 2rem; }
-  @media (max-width: 1000px) { .notes-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  @media (max-width: 760px) { .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; } }
-  .postit {
-    position: relative;
-    background: var(--postit);
-    color: var(--postit-ink);
-    padding: 1.1rem 1.1rem 1.4rem;
-    transform: rotate(var(--r, -2deg));
-    transform-origin: 50% 0;
-    box-shadow: 0 14px 18px -12px var(--shadow-soft);
-    font-size: var(--s-18);
-    line-height: 1.35;
-    transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 380ms ease;
-    will-change: translate;
-  }
-  /* the bottom corner lifts a little, like a real sticky note */
-  .postit::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 22px;
-    height: 22px;
-    background: linear-gradient(135deg, rgb(0 0 0 / 0) 50%, rgb(0 0 0 / 0.12) 50%, rgb(255 255 255 / 0.25) 100%);
-    transition: width 380ms ease, height 380ms ease;
-  }
-  .postit:hover { transform: rotate(calc(var(--r, -2deg) * -0.6)) translateY(-6px) scale(1.03); box-shadow: 0 26px 26px -16px var(--shadow-soft); }
-  .postit:hover::after { width: 34px; height: 34px; }
-  .js .notes-wall:not(.is-in) .postit { opacity: 0; }
-  .notes-wall.is-in .postit { animation: stick 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; animation-delay: calc(var(--i) * 90ms); }
-  @keyframes stick {
-    0% { opacity: 0; transform: rotate(calc(var(--r, -2deg) * 3)) translateY(-24px) scale(1.12); box-shadow: 0 40px 30px -16px rgb(0 0 0 / 0.5); }
-    100% { opacity: 1; transform: rotate(var(--r, -2deg)); }
-  }
-  .postit strong { display: block; font-weight: 700; font-size: var(--s-21); margin-bottom: 0.3rem; }
-  .edu { display: grid; grid-template-columns: 3fr 2fr; gap: 3rem; }
-  .edu-h { font-family: var(--display); text-transform: uppercase; font-size: var(--s-36); margin-bottom: 1rem; }
-  .edu-list, .cert-list { margin: 0; padding: 0; list-style: none; }
-  .edu-list li + li { margin-top: 1.4rem; }
-  .edu-list p { margin: 0; }
-  .degree { font-weight: 600; }
-  .cert-list li { padding-block: 0.55rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); font-size: var(--s-16); }
-  .muted { color: var(--paper-dim); font-size: var(--s-16); }
-
-  /* Along the way: ticket stubs */
-  .stubs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.8rem 2.2rem; }
-  .stub-wrap { transform: rotate(var(--r)); transition: transform 350ms var(--ease); }
-  .stub-wrap:hover { transform: rotate(calc(var(--r) * -0.5)) translateY(-4px); }
-  .js .stubs:not(.is-in) .stub-wrap { opacity: 0; }
-  .stubs.is-in .stub-wrap { animation: deal 800ms cubic-bezier(0.25, 1.3, 0.5, 1) backwards; animation-delay: calc(var(--i) * 130ms); }
-  @keyframes deal { from { opacity: 0; transform: translateX(-40px) rotate(calc(var(--r) - 6deg)); } to { opacity: 1; transform: rotate(var(--r)); } }
-  .stub {
-    display: grid;
-    grid-template-columns: 6.2rem 1fr;
-    background: var(--card);
-    color: var(--card-ink);
-    min-height: 9rem;
-    -webkit-mask: radial-gradient(circle at 0 50%, transparent 11px, #000 11.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 11px, #000 11.5px) right / 51% 100% no-repeat;
-    mask: radial-gradient(circle at 0 50%, transparent 11px, #000 11.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 11px, #000 11.5px) right / 51% 100% no-repeat;
-  }
-  .year {
-    display: grid;
-    place-items: center;
-    font-size: 2.6rem;
-    border-right: 2px dashed rgb(var(--card-ink-rgb) / 0.25);
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-  }
-  .stub-body { display: grid; align-content: center; gap: 0.15rem; padding: 1.1rem 1.6rem 1.1rem 1.3rem; }
-  .stub-title { font-family: var(--display); text-transform: uppercase; font-size: 1.9rem; line-height: 1; }
-  .stub-where { font-size: var(--s-14); color: rgb(var(--card-ink-rgb) / 0.7); }
-  .stub-note { font-size: var(--s-16); line-height: 1.45; margin-top: 0.35rem; }
-  .stub-link { justify-self: start; margin-top: 0.3rem; font-size: var(--s-18); color: var(--card-ink); }
-
   /* Reading */
-  .empty { display: flex; gap: 1.5rem; align-items: center; max-width: 640px; color: var(--chalk); }
-  .empty :global(.empty-art) { width: 110px; flex: none; color: var(--chalk); }
-  .empty p { margin: 0; }
+  .muted { color: var(--paper-dim); font-size: var(--s-16); }
   .post-list { list-style: none; margin: 0; padding: 0; }
   .post-list li { padding-block: 1rem; border-top: 1px solid rgb(var(--chalk-rgb) / 0.18); }
   .post-list a { font-size: var(--s-24); }
@@ -382,10 +224,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .contact-note { max-width: 260px; justify-self: end; margin: 0; }
 
   @media (max-width: 760px) {
-    .role { grid-template-columns: 1fr; gap: 0.3rem; }
-    .stubs { grid-template-columns: 1fr; }
-    .notes-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .edu { grid-template-columns: 1fr; gap: 2.5rem; }
+    .row { grid-template-columns: 1fr; gap: 0.25rem; }
     .contact-inner { grid-template-columns: 1fr; }
     .contact-note { justify-self: start; margin-top: 2rem; }
   }

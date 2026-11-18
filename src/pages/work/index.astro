@@ -5,7 +5,8 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Doodle from '../../components/Doodle.astro';
 import Sky from '../../components/Sky.astro';
-import { person, roles } from '../../data/site';
+import Stubs from '../../components/Stubs.astro';
+import { person, roles, toolkit, education, certifications } from '../../data/site';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 const byId = (id: string) => projects.find((p) => p.id === id)!;
@@ -27,8 +28,16 @@ const art: Record<string, string> = {
   'Proshore (Digital Product Labs)': 'laptop',
 };
 
-type Block = { company: string; titles: string; when: string[]; place: string; art: string; ids: string[] };
+type Block = {
+  id: string; company: string; titles: string; when: string[]; place: string; art: string; ids: string[];
+  summary?: string; wins?: string[]; steps?: { title: string; when: string }[];
+};
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 const fromRoles: Block[] = roles.map((r) => ({
+  id: slug(r.company),
+  summary: r.summary,
+  wins: r.highlights,
+  steps: r.steps,
   company: r.company,
   titles: r.titles.join(' and '),
   when: [r.start, `to ${r.end}`],
@@ -47,6 +56,7 @@ const sections = [
     title: 'Independent',
     blocks: [
       {
+        id: 'on-my-own',
         company: 'On my own',
         titles: 'Built solo and at Wright State University',
         when: ['2025 to now'],
@@ -88,7 +98,7 @@ let n = 0;
       <h1 class="display echo">Projects</h1>
       <p class="intro">
         {projects.length} things I've shipped or built, set out like my resume: {industry} in industry, {projects.length - industry} on my own.
-        Open any line for the problem, how it was built and what changed.
+        Open any line for the problem, how it was built and what changed. Skills, education and awards are at the end.
       </p>
 
       <div class="filters" role="toolbar" aria-label="Filter projects">
@@ -118,7 +128,7 @@ let n = 0;
         <section class="part" data-part aria-labelledby={`part-${s.title}`}>
           <h2 id={`part-${s.title}`} class="part-title display">{s.title}</h2>
           {s.blocks.map((b, bi) => (
-            <div class:list={['block', { first: bi === 0 }]} data-block style={`--b:${n++}`}>
+            <div class:list={['block', { first: bi === 0 }]} id={b.id} data-block style={`--b:${n++}`}>
               <div class="margin">
                 <Doodle name={b.art} class:list={["block-art", `art-${b.art}`]} />
                 <p class="when hand">{b.when.map((w, i) => <>{i > 0 && <br />}{w}</>)}</p>
@@ -127,6 +137,13 @@ let n = 0;
               <div class="main">
                 <h3 class="company display">{b.company}</h3>
                 <p class="titles">{b.titles}</p>
+                {b.steps && (
+                  <ol class="steps" aria-label="Roles over time">
+                    {b.steps.map((st) => <li><span class="dot"></span><span class="st-title">{st.title}</span><span class="st-when">{st.when}</span></li>)}
+                  </ol>
+                )}
+                {b.summary && <p class="summary">{b.summary}</p>}
+                {b.wins && <ul class="wins">{b.wins.map((w) => <li set:html={w} />)}</ul>}
                 <ol class="entries">
                   {b.ids.map((id, ei) => {
                     const p = byId(id);
@@ -156,7 +173,41 @@ let n = 0;
           ))}
         </section>
       ))}
+
+      <section class="part" aria-labelledby="part-skills">
+        <h2 id="part-skills" class="part-title display">Skills</h2>
+        <dl class="skills">
+          {toolkit.map((t) => <div><dt>{t.heading}</dt><dd>{t.items}</dd></div>)}
+        </dl>
+      </section>
+
+      <div class="two">
+        <section class="part" aria-labelledby="part-edu">
+          <h2 id="part-edu" class="part-title display">Education</h2>
+          <ul class="edu">
+            {education.map((e) => (
+              <li>
+                <p class="degree">{e.degree}</p>
+                <p>{e.school}, {e.place}</p>
+                <p class="muted">{e.when}{e.detail && `. ${e.detail}`}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section class="part" aria-labelledby="part-certs">
+          <h2 id="part-certs" class="part-title display">Certifications</h2>
+          <ul class="certs">{certifications.map((c) => <li>{c}</li>)}</ul>
+        </section>
+      </div>
     </article>
+  </section>
+
+  <section class="section wrap honours" aria-labelledby="honours-title">
+    <div class="section-head" data-speed="-0.04">
+      <h2 id="honours-title" class="display">Along the way</h2>
+      <p>An award, a talk, some mentoring and a bit of community work.</p>
+    </div>
+    <Stubs />
   </section>
 </Base>
 
@@ -315,6 +366,40 @@ let n = 0;
 
   .company { margin: 0; font-size: clamp(2rem, 3vw, 2.5rem); line-height: 0.95; }
   .titles { margin: 0.3rem 0 0; font-style: italic; color: rgb(var(--card-ink-rgb) / 0.78); }
+  .block { scroll-margin-top: 6rem; }
+  .summary { margin: 0.7rem 0 0.5rem; max-width: var(--measure); font-size: var(--s-16); }
+  .wins { margin: 0 0 0.4rem; padding-left: 1.1rem; max-width: var(--measure); font-size: var(--s-16); }
+  .wins li + li { margin-top: 0.3rem; }
+  .wins :global(strong) { font-weight: 680; }
+  /* Role changes inside one company, as a small track. */
+  .steps { list-style: none; margin: 0.8rem 0 0.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 0; position: relative; z-index: 0; }
+  .steps li { position: relative; display: grid; gap: 0.05rem; padding: 0 1.6rem 0 1.1rem; font-size: var(--s-14); }
+  .steps li::after { content: ''; position: absolute; left: 0.3rem; right: 0.4rem; top: 0.62rem; border-top: 1px dashed rgb(var(--card-ink-rgb) / 0.4); z-index: -1; }
+  .steps li:last-child::after { display: none; }
+  .steps .dot { position: absolute; left: 0; top: 0.36rem; width: 0.55rem; height: 0.55rem; border-radius: 50%; border: 1.5px solid var(--card-ink); background: var(--card); }
+  .steps li:last-child .dot { background: var(--card-ink); }
+  .st-when { color: rgb(var(--card-ink-rgb) / 0.65); font-size: 0.92em; }
+
+  .skills { margin: 0.6rem 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem 2.5rem; }
+  .skills div { display: grid; grid-template-columns: 8.5rem 1fr; gap: 1rem; font-size: var(--s-16); }
+  .skills dt { font-weight: 680; }
+  .skills dd { margin: 0; color: rgb(var(--card-ink-rgb) / 0.85); }
+  .two { display: grid; grid-template-columns: 3fr 2fr; gap: 0 3rem; }
+  .edu, .certs { list-style: none; margin: 0.6rem 0 0; padding: 0; font-size: var(--s-16); }
+  .edu li + li { margin-top: 1rem; }
+  .edu p { margin: 0; }
+  .degree { font-weight: 680; }
+  .muted { color: rgb(var(--card-ink-rgb) / 0.68); }
+  .certs li { padding-block: 0.4rem; border-top: 1px solid rgb(var(--card-ink-rgb) / 0.14); }
+  .certs li:first-child { border-top: 0; padding-top: 0; }
+  .honours { padding-top: clamp(3.5rem, 8vw, 6rem); }
+  @media (max-width: 860px) {
+    .skills { grid-template-columns: 1fr; }
+    .two { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .skills div { grid-template-columns: 1fr; gap: 0.1rem; }
+  }
 
   .entries { list-style: none; margin: 0.9rem 0 0; padding: 0; }
   .entry { position: relative; padding: 1rem 0 1.05rem; border-top: 1px dashed rgb(var(--card-ink-rgb) / 0.2); }

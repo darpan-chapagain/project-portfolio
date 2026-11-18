@@ -4,6 +4,11 @@
 import { getCollection } from 'astro:content';
 import { board } from '../data/site';
 
+interface Props {
+  /** Show only the first few cards of each column (the home page teaser). */
+  limit?: number;
+}
+const { limit } = Astro.props;
 const projects = await getCollection('projects');
 const shortOf = (id: string) => projects.find((p) => p.id === id)?.data.short ?? id;
 
@@ -11,7 +16,8 @@ const tilt = [-0.9, 0.7, -0.4, 1, -0.6, 0.5, -1.1, 0.8, -0.3, 0.6, -0.8, 0.4, -0
 let k = 0;
 const columns = board.map((col, c) => ({
   ...col,
-  cards: col.cards.map((card, row) => {
+  total: col.cards.length,
+  cards: col.cards.slice(0, limit ?? col.cards.length).map((card, row) => {
     const i = k++;
     return {
       ...card,
@@ -22,7 +28,7 @@ const columns = board.map((col, c) => ({
   }),
 }));
 ---
-<div class="board" data-reveal>
+<div class:list={['board', { teaser: limit }]} data-reveal>
   <p class="swipe hand" aria-hidden="true">swipe the board</p>
   <div class="cols">
     {columns.map((col, c) => (
@@ -34,8 +40,8 @@ const columns = board.map((col, c) => ({
           <h3 id={`col-${c}`} class="col-name hand">
             {col.column}
             <span class="count">
-              <span class="sr-only">, {col.cards.length} cards</span>
-              <span aria-hidden="true">{col.cards.length}</span>
+              <span class="sr-only">, {col.total} cards</span>
+              <span aria-hidden="true">{col.total}</span>
               <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M30 8 C20 2 6 8 5 20 C4 32 16 38 26 35 C36 32 38 18 32 10 C29 6 24 5 19 6" /></svg>
             </span>
           </h3>
@@ -44,7 +50,7 @@ const columns = board.map((col, c) => ({
             <path d="M2 6 C40 3 80 8 120 5 C150 3 180 7 198 4" />
           </svg>
         </header>
-        <ol class="cards">
+        <ol class="cards" id={limit ? undefined : `col-${c}-cards`}>
           {col.cards.map((card) => (
             <li class="ticket" style={card.style}>
               <div class="card">
@@ -58,6 +64,9 @@ const columns = board.map((col, c) => ({
             </li>
           ))}
         </ol>
+        {limit && col.total > limit && (
+          <p class="more hand"><a href="/how-i-build/">+{col.total - limit} more on the board</a></p>
+        )}
       </section>
     ))}
   </div>
@@ -164,6 +173,9 @@ const columns = board.map((col, c) => ({
   .m-line { stroke: rgb(var(--card-ink-rgb) / 0.35); stroke-width: 1.4; stroke-linecap: round; }
 
   .swipe { display: none; }
+  .more { margin: 1.1rem 0 0; font-size: var(--s-16); }
+  .more a { color: var(--paper-dim); }
+  .more a:hover { color: var(--paper); }
 
   /* The board draws itself, then the cards go up one by one. */
   .js .board:not(.is-in) :is(.divider, .underline, .count svg) { clip-path: inset(0 100% 100% 0); }
