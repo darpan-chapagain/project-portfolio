@@ -44,6 +44,7 @@ function savedTheme(): string | null {
 
 function setTheme(next: 'light' | 'dark', save: boolean) {
   root.dataset.theme = next;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#15130f' : '#ece5d5');
   if (save) {
     try { localStorage.setItem('theme', next); } catch { /* storage may be blocked */ }
     const rest = (window.name || '').split(';').filter((p) => p && !p.startsWith('theme='));
@@ -81,10 +82,6 @@ window.addEventListener('storage', (e) => {
   if (e.key === 'theme' && (e.newValue === 'light' || e.newValue === 'dark')) setTheme(e.newValue, false);
 });
 
-// Follow the device setting until the visitor picks one. Light unless the device is dark.
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  if (!savedTheme()) setTheme(e.matches ? 'dark' : 'light', false);
-});
 
 /* ---------- Sticky navbar ---------- */
 const topbar = document.querySelector<HTMLElement>('.topbar');

@@ -26,8 +26,7 @@ const nav = [
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#15130f" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ece5d5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#ece5d5" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
@@ -35,13 +34,14 @@ const nav = [
     <meta name="twitter:card" content="summary" />
     <script is:inline>
       // Pick the theme before anything paints.
-      // A saved choice wins, then the tab's name (private modes that block storage),
-      // then the device setting: light unless the device is dark.
+      // A saved choice wins, then the tab's name (private modes that block storage).
+      // Everyone else starts on light; the toggle switches to dark and remembers it.
       (function () {
         var d = document.documentElement, t;
         try { t = localStorage.getItem('theme'); } catch (e) {}
         if (t !== 'light' && t !== 'dark') { var m = /(?:^|;)theme=(light|dark)/.exec(window.name || ''); if (m) t = m[1]; }
-        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (t !== 'light' && t !== 'dark') t = 'light';
+        if (t === 'dark') { var mc = document.querySelector('meta[name="theme-color"]'); if (mc) mc.setAttribute('content', '#15130f'); }
         d.dataset.theme = t;
         d.classList.add('js');
         // Low-end devices and data savers get a lighter page: no wobbling paper or ink.
