@@ -108,7 +108,9 @@ if (reduce || !('IntersectionObserver' in window)) {
           io.unobserve(e.target);
         }
       }),
-    { threshold: 0.25, rootMargin: '0px 0px -8% 0px' }
+    // Fire as soon as the top edge is a little way onto the screen. A share-of-element
+    // threshold made tall blocks wait until mid-screen, and the tallest never fired at all.
+    { threshold: 0, rootMargin: '0px 0px -12% 0px' }
   );
   revealables.forEach((el) => io.observe(el));
 }
