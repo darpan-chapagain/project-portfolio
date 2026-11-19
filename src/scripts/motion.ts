@@ -172,7 +172,8 @@ function createHub(area: HTMLElement) {
   if (!canvas || !ctx) return null;
 
   const strength = Number(area.dataset.sky || 0.42);
-  const anchors = items.filter((it) => area.contains(it.el) && it.el.matches('.d'));
+  // Doodles hidden on this screen size (display: none) aren't anchors, or lines would run to the corner.
+  const anchors = items.filter((it) => area.contains(it.el) && it.el.matches('.d') && getComputedStyle(it.el).display !== 'none');
   let box = { left: 0, top: 0, w: 0, h: 0 };
   let visible = false;
   const pos = { x: 0, y: 0, init: false };
