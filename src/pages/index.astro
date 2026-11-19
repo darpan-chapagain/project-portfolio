@@ -149,7 +149,13 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
         <a class="email" href={`mailto:${person.email}`}>{person.email}</a>
         <p class="links"><a href={person.linkedin}>LinkedIn</a> <a href={person.github}>GitHub</a></p>
       </div>
-      <p class="postit hand contact-note" style="--r:4deg" data-speed="-0.08">Based in Fairborn, Ohio. From Kathmandu. Looking for product management roles, ideally in fintech. Open to other good problems too.</p>
+      <div class="pinboard" data-speed="-0.08">
+        <figure class="instant">
+          <img src="/me/chicago.webp" alt="Darpan by the Chicago River" width="480" height="600" loading="lazy" decoding="async" />
+          <figcaption class="hand">Chicago</figcaption>
+        </figure>
+        <p class="postit hand contact-note" style="--r:4deg">Based in Fairborn, Ohio. From Kathmandu. Looking for product management roles, ideally in fintech. Open to other good problems too.</p>
+      </div>
     </div>
   </section>
 </Base>
@@ -231,11 +237,45 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'nu
   .lede { margin: 0 0 1.2rem; max-width: 44ch; }
   .email { font-size: clamp(var(--s-21), 3vw, var(--s-36)); word-break: break-all; }
   .links { display: flex; gap: 1.5rem; margin: 1rem 0 0; color: var(--paper-dim); }
-  .contact-note { max-width: 260px; justify-self: end; margin: 0; }
+  /* An instant photo pinned beside the sticky note. Color on light, black and white on dark. */
+  .pinboard { justify-self: end; display: flex; align-items: center; }
+  .instant {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    width: 190px;
+    margin: 0 -1.4rem 0 0;
+    padding: 10px 10px 0;
+    background: var(--card);
+    box-shadow: 0 18px 26px -14px var(--shadow-soft), 0 2px 4px rgb(0 0 0 / 0.08);
+    transform: rotate(-5deg);
+    transition: transform 400ms var(--ease);
+  }
+  .instant:hover { transform: rotate(-2deg) translateY(-0.4rem); }
+  .instant::before {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    width: 74px;
+    height: 22px;
+    translate: -50% 0;
+    rotate: 3deg;
+    background: rgb(236 217 111 / 0.72);
+  }
+  .instant img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; transition: filter 400ms ease; }
+  :global([data-theme='dark']) .instant img { filter: grayscale(1) contrast(1.06); }
+  .instant figcaption { padding: 0.35rem 0 0.55rem; text-align: center; font-size: var(--s-21); line-height: 1.2; color: var(--card-ink); }
+  .contact-note { position: relative; z-index: 2; max-width: 260px; margin: 0; }
 
   @media (max-width: 760px) {
     .row { grid-template-columns: 1fr; gap: 0.25rem; }
     .contact-inner { grid-template-columns: 1fr; }
-    .contact-note { justify-self: start; margin-top: 2rem; }
+    .pinboard { justify-self: start; margin-top: 1.8rem; }
+  }
+  @media (max-width: 480px) {
+    .instant { width: 140px; padding: 7px 7px 0; margin-right: -1.6rem; }
+    .instant figcaption { font-size: var(--s-18); }
+    .contact-note { max-width: 210px; font-size: var(--s-16); }
   }
 </style>
