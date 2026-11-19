@@ -301,14 +301,14 @@ export const board: { column: string; hint: string; cards: BoardCard[] }[] = [
 ];
 
 // Captions for the rotating card in the hero. `art` names a doodle in Doodles.astro.
-// The hero reel plays through these once and stops on the last one: the real photo.
+// The hero reel opens on the real photo, plays through the doodles once, and comes back to rest on the photo.
 export const heroFrames: { art?: string; photo?: string; alt?: string; caption: string }[] = [
+  { photo: '/me/chicago.webp', alt: 'Darpan by the Chicago River', caption: 'Chicago. A long way from Kathmandu.' },
   { art: 'stupa', caption: 'Kathmandu. Where it started.' },
   { art: 'laptop', caption: 'Remote for a US client. PHP dev to team lead.' },
   { art: 'vault', caption: 'Banking software for 16+ banks in Nepal.' },
   { art: 'book', caption: 'Reading more. Reviews coming soon.' },
   { art: 'biplane', caption: 'Fairborn, Ohio. M.S. at Wright State.' },
-  { photo: '/me/chicago.webp', alt: 'Darpan by the Chicago River', caption: 'Chicago. A long way from Kathmandu.' },
 ];
 
 export type Level = {

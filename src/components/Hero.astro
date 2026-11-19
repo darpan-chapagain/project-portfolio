@@ -32,7 +32,7 @@ const [neFirst, neLast] = person.nepaliFull;
         {heroFrames.map((f, i) => (
           <div class:list={['frame torn', { 'is-on': i === 0, 'photo-frame': f.photo }]} data-frame={i}>
             {f.photo
-              ? <img class="frame-photo" src={f.photo} alt={f.alt} width="480" height="600" loading="lazy" decoding="async" />
+              ? <img class="frame-photo" src={f.photo} alt={f.alt} width="480" height="600" fetchpriority="high" decoding="async" />
               : <Doodle name={f.art!} class="frame-art" />}
             <figcaption class="hand">{f.caption}</figcaption>
           </div>
@@ -90,22 +90,20 @@ const [neFirst, neLast] = person.nepaliFull;
   let i = 0;
   let timer: number | undefined;
   const tilt = [-4, 2.5, -1.5, 3.5, -3];
-  const last = frames.length - 1;
+  // Open on the photo, play through the doodles once, then come back to rest on the photo.
+  let done = false;
   const show = (n: number) => {
     frames[i].classList.remove('is-on');
     i = n;
     frames[i].style.setProperty('--tilt', `${tilt[i % tilt.length]}deg`);
     frames[i].classList.add('is-on');
   };
-  // Play through once and stop on the last frame, the real photo.
   const step = () => {
-    show(i + 1);
-    if (i === last) stop();
+    show((i + 1) % frames.length);
+    if (i === 0) { done = true; stop(); }
   };
-  const start = () => { if (!reduce.matches && i < last) timer = window.setInterval(step, 2600); };
+  const start = () => { if (!reduce.matches && !done && frames.length > 1) timer = window.setInterval(step, 2600); };
   const stop = () => window.clearInterval(timer);
-  // With reduced motion there's no reel, so go straight to the photo.
-  if (reduce.matches && frames.length > 1) show(last);
   const reel = document.querySelector('.reel');
   reel?.addEventListener('mouseenter', stop);
   reel?.addEventListener('mouseleave', start);
@@ -377,9 +375,11 @@ const [neFirst, neLast] = person.nepaliFull;
 
   @media (max-width: 860px) {
     .hero { padding-block: 8.5rem 6rem; place-items: start center; }
-    .hero-inner { grid-template-columns: 1fr; justify-items: start; gap: 2.5rem; }
-    .intro { order: -1; }
-    .reel-wrap { width: min(260px, 70vw); justify-self: center; }
+    .hero-inner { grid-template-columns: 1fr; justify-items: start; gap: 1.6rem; }
+    /* On phones the photo comes first, above the name. */
+    .reel-wrap { width: min(220px, 58vw); justify-self: start; margin-left: 0.4rem; }
+    .frame { padding: 1.1rem 1rem 0.9rem; }
+    .frame figcaption { font-size: var(--s-16); }
     .d-dial, .d-plane, .d-book, .d-biplane, .d-star, .fl-d { display: none; }
     .fl-m { display: block; }
     .hero-flags { top: 66px; }
